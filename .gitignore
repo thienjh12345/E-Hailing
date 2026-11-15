@@ -1,0 +1,12 @@
+# Config with passwords
+config.php
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Uploads and logs
+uploads/
+*.log
