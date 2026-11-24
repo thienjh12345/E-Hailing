@@ -22,9 +22,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($p['status'] !== $map[$action][0]) {
         flash('error', "{$p['name']} is already {$p['status']}.");
     } else {
-        $pdo->prepare('UPDATE passengers SET status = ? WHERE id = ?')->execute([$map[$action][1], $id]);
+        // Optional reason the passenger sees in their portal (kept only while suspended).
+        $note = mb_substr(trim((string)($_POST['note'] ?? '')), 0, 255);
+        $note = $map[$action][1] === 'suspended' && $note !== '' ? $note : null;
+        $pdo->prepare('UPDATE passengers SET status = ?, status_note = ? WHERE id = ?')->execute([$map[$action][1], $note, $id]);
         flash('success', "{$p['name']} has been {$map[$action][2]}.");
     }
+    if (($_POST['back'] ?? '') === 'passenger') redirect('admin/passenger.php?id=' . $id);
     redirect('admin/passengers.php' . safe_qs($_POST['qs'] ?? ''));
 }
 
@@ -92,11 +96,11 @@ admin_header('Passengers', 'passengers');
             </thead>
             <tbody>
             <?php foreach ($passengers as $p): ?>
-                <tr>
+                <tr class="clickable" data-href="<?= e(url('admin/passenger.php?id=' . $p['id'])) ?>">
                     <td>
                         <div class="person">
-                            <span class="avatar"><?= e(initials($p['name'])) ?></span>
-                            <div><strong><?= e($p['name']) ?></strong><small class="muted block"><?= e($p['email']) ?></small></div>
+                            <?= avatar($p['name'], $p['profile_photo']) ?>
+                            <div><a class="strong-link" href="<?= e(url('admin/passenger.php?id=' . $p['id'])) ?>"><?= e($p['name']) ?></a><small class="muted block"><?= e($p['email']) ?></small></div>
                         </div>
                     </td>
                     <td><?= e($p['phone']) ?></td>

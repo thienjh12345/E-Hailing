@@ -9,6 +9,8 @@
  *  - "Free" fields (contact details, photo) the driver can change at any time.
  */
 
+require_once __DIR__ . '/validation.php';
+
 const VEHICLE_TYPES = ['car' => 'Crab Car', 'premium' => 'Crab Premium', 'bike' => 'Crab Bike'];
 
 /** Fields a driver can update immediately. */
@@ -51,17 +53,8 @@ function driver_field_display(string $field, $value): string
 
 /* ---------------------------------------------------------------------------
  * Normalisers — turn what people type into one consistent stored format.
- * Each returns null when the input can't be valid.
+ * Each returns null when the input can't be valid. (normalize_phone is in validation.php)
  * ------------------------------------------------------------------------- */
-
-/** "0123456789", "+60 12-345 6789" → "012-3456789" */
-function normalize_phone(string $raw): ?string
-{
-    $d = preg_replace('/\D/', '', $raw);
-    if (str_starts_with($d, '60')) $d = '0' . substr($d, 2);
-    if (!preg_match('/^01\d{8,9}$/', $d)) return null;
-    return substr($d, 0, 3) . '-' . substr($d, 3);
-}
 
 /** "900101145678" → "900101-14-5678" (checks the birth date part too) */
 function normalize_ic(string $raw): ?string
@@ -101,8 +94,7 @@ function validate_driver_input(array $input, array $fields, ?int $driverId = nul
         switch ($f) {
             case 'name':
                 $v = preg_replace('/\s+/', ' ', $v);
-                if (mb_strlen($v) < 3 || mb_strlen($v) > 100) $errors[$f] = 'Enter your full name (3–100 characters).';
-                elseif (!preg_match("/^[\p{L} .'\/@-]+$/u", $v)) $errors[$f] = 'Name can only contain letters, spaces and . \' / @ -';
+                if ($err = validate_person_name($v)) $errors[$f] = $err;
                 break;
 
             case 'email':
@@ -194,14 +186,6 @@ function validate_driver_input(array $input, array $fields, ?int $driverId = nul
     return [$clean, $errors];
 }
 
-/** Password rule shared by registration and password change. */
-function validate_new_password(string $pw, string $confirm): ?string
-{
-    if (strlen($pw) < 8) return 'Use at least 8 characters.';
-    if (!preg_match('/[A-Za-z]/', $pw) || !preg_match('/\d/', $pw)) return 'Use a mix of letters and numbers.';
-    if ($pw !== $confirm) return 'The two passwords don\'t match.';
-    return null;
-}
 
 /* ---------------------------------------------------------------------------
  * Reading / writing driver rows

@@ -19,8 +19,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'cance
 
 $stmt = $pdo->prepare("
     SELECT r.*,
-           p.name AS p_name, p.phone AS p_phone, p.email AS p_email,
-           d.name AS d_name, d.phone AS d_phone, d.vehicle_model, d.plate_no, d.rating AS d_rating
+           p.name AS p_name, p.phone AS p_phone, p.email AS p_email, p.profile_photo AS p_photo,
+           d.name AS d_name, d.phone AS d_phone, d.vehicle_model, d.plate_no, d.rating AS d_rating, d.profile_photo AS d_photo
     FROM rides r
     JOIN passengers p ON p.id = r.passenger_id
     LEFT JOIN drivers d ON d.id = r.driver_id
@@ -93,19 +93,19 @@ admin_header('Ride #' . $ride['id'], 'rides');
         <article class="card">
             <header class="card-head"><h2>Passenger</h2></header>
             <div class="person big">
-                <span class="avatar"><?= e(initials($ride['p_name'])) ?></span>
-                <div><strong><?= e($ride['p_name']) ?></strong><small class="muted block"><?= e($ride['p_phone']) ?></small><small class="muted block"><?= e($ride['p_email']) ?></small></div>
+                <?= avatar($ride['p_name'], $ride['p_photo'], 'lg') ?>
+                <div><a class="strong-link" href="<?= e(url('admin/passenger.php?id=' . $ride['passenger_id'])) ?>"><?= e($ride['p_name']) ?></a><small class="muted block"><?= e($ride['p_phone']) ?></small><small class="muted block"><?= e($ride['p_email']) ?></small></div>
             </div>
-            <a class="link" href="<?= e(url('admin/rides.php?passenger=' . $ride['passenger_id'])) ?>">See all their rides <?= icon('arrow', 16) ?></a>
+            <a class="link" href="<?= e(url('admin/passenger.php?id=' . $ride['passenger_id'])) ?>">View passenger profile <?= icon('arrow', 16) ?></a>
         </article>
 
         <article class="card">
             <header class="card-head"><h2>Driver</h2></header>
             <?php if ($ride['d_name']): ?>
                 <div class="person big">
-                    <span class="avatar"><?= e(initials($ride['d_name'])) ?></span>
+                    <?= avatar($ride['d_name'], $ride['d_photo'], 'lg') ?>
                     <div>
-                        <strong><?= e($ride['d_name']) ?></strong>
+                        <a class="strong-link" href="<?= e(url('admin/driver.php?id=' . $ride['driver_id'])) ?>"><?= e($ride['d_name']) ?></a>
                         <small class="muted block"><?= e($ride['d_phone']) ?></small>
                         <small class="muted block"><?= e($ride['vehicle_model']) ?> · <span class="plate"><?= e($ride['plate_no']) ?></span></small>
                     </div>

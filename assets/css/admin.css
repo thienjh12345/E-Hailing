@@ -581,3 +581,96 @@ button { font: inherit; color: inherit; }
 .profile-actions .status-form { flex-wrap: nowrap; }
 .profile-actions .status-form input[type="text"] { flex: 0 1 220px; width: 220px; }
 @media (max-width: 640px) { .profile-actions .status-form { flex-wrap: wrap; } .profile-actions .status-form input[type="text"] { width: 100%; flex-basis: 100%; } }
+
+/* =============================================================
+   Passenger Profile Management (passenger portal + admin passenger pages)
+   ============================================================= */
+.avatar.lg { width: 46px; height: 46px; font-size: 15px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0; }
+.login-alt.small { font-size: 13px; margin-top: -8px; }
+
+/* ---------- Star display & star rating input ---------- */
+.stars { color: #F59E0B; letter-spacing: 1px; white-space: nowrap; }
+.stars .off { color: var(--line); }
+.small-rating { font-size: 12px; }
+.rate-form { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.star-input { border: 0; margin: 0; padding: 0; display: inline-flex; flex-direction: row-reverse; }
+.star-input input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.star-input label { font-size: 24px; line-height: 1; padding: 0 2px; color: var(--line); cursor: pointer; transition: color .1s, transform .1s; }
+/* Hovering or choosing a star lights it and every star "after" it in the reversed row (i.e. the lower stars). */
+.star-input label:hover, .star-input label:hover ~ label,
+.star-input input:checked ~ label { color: #F59E0B; }
+.star-input label:hover { transform: scale(1.15); }
+.star-input input:focus-visible + label { outline: 2px solid var(--brand); border-radius: 4px; }
+
+.rate-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.rate-list li { display: flex; justify-content: space-between; align-items: center; gap: 12px 20px; flex-wrap: wrap; padding: 12px 0; border-top: 1px solid var(--line-soft); }
+.rate-list li:first-child { border-top: 0; padding-top: 0; }
+.rate-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+
+.live-card { border-color: color-mix(in srgb, var(--info) 45%, var(--line)); background: linear-gradient(0deg, var(--surface), var(--info-bg)); }
+
+/* ---------- Ride history cards ---------- */
+.ride-cards { display: flex; flex-direction: column; gap: 14px; }
+.ride-card { padding: 18px 20px; }
+.ride-card-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.ride-fare { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; font-variant-numeric: tabular-nums; }
+.route-line.compact { margin: 12px 0; }
+.route-line.compact li { padding: 4px 0; font-size: 13.5px; }
+.route-line.compact li:first-child::after { top: 20px; bottom: -6px; }
+.route-line.compact .dot { width: 12px; height: 12px; margin-top: 3px; }
+.ride-card-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid var(--line-soft); }
+
+/* ---------- Saved places ---------- */
+.place-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.place-list li { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line-soft); }
+.place-list li:first-child { border-top: 0; padding-top: 0; }
+.place-list li.editing { background: var(--brand-soft); margin: 0 -12px; padding-inline: 12px; border-radius: var(--radius-sm); }
+.place-list.compact li { padding: 8px 0; align-items: flex-start; }
+.place-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0; background: var(--brand-soft); color: var(--brand-ink); }
+.place-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.place-text span { overflow-wrap: anywhere; }
+.quick-labels { display: flex; gap: 6px; margin-bottom: 14px; }
+.quick-labels .tab { border: 1px solid var(--line); }
+
+@media (max-width: 640px) {
+    .rate-meta { align-items: flex-start; }
+}
+
+/* =============================================================
+   Homepage (index.php) — unified sign-in
+   ============================================================= */
+.home-brand { display: flex; align-items: center; gap: 12px; font-size: 30px; font-weight: 800; letter-spacing: -.03em; }
+.home-page .login-art h2 { font-size: 40px; line-height: 1.1; margin-top: 28px; }
+.home-points { list-style: none; margin: 24px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; font-size: 15px; }
+.home-points li { display: flex; align-items: center; gap: 10px; }
+.home-points .icon { flex-shrink: 0; padding: 3px; border-radius: 50%; background: rgba(255, 255, 255, .2); width: 24px; height: 24px; }
+
+/* Role picker: radio buttons styled as a segmented control (works without JS) */
+.role-switch { border: 0; margin: 0; padding: 4px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; border-radius: 12px; background: var(--line-soft); }
+.role-switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.role-switch label {
+    display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 6px; border-radius: 9px;
+    font-weight: 600; font-size: 13px; color: var(--muted); cursor: pointer; transition: background .12s, color .12s;
+}
+.role-switch label:hover { color: var(--ink); }
+.role-switch input:checked + label { background: var(--surface); color: var(--brand-ink); box-shadow: var(--shadow); }
+.role-switch input:focus-visible + label { outline: 2px solid var(--brand); outline-offset: 1px; }
+
+.signup-links { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; padding-top: 18px; border-top: 1px solid var(--line); }
+.signup-link { display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); color: var(--brand-ink); }
+.signup-link span { display: flex; flex-direction: column; color: var(--ink); font-size: 13px; }
+.signup-link small { font-size: 12px; }
+.signup-link:hover { border-color: var(--brand-line); background: var(--brand-soft); }
+
+@media (max-width: 860px) {
+    /* On phones the red panel is hidden, so keep a compact brand header above the form */
+    .home-page .login-panel { place-items: start center; padding-top: 40px; }
+}
+@media (max-width: 420px) {
+    .signup-links { grid-template-columns: 1fr; }
+}
+
+/* "Back to home" link on the portal sign-in / register pages */
+.back-home { align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 4px; padding: 4px 8px 4px 0; color: var(--muted); font-weight: 600; font-size: 13px; }
+.back-home:hover { color: var(--brand-ink); }

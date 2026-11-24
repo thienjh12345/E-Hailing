@@ -10,6 +10,7 @@ CREATE DATABASE IF NOT EXISTS crab_db
 USE crab_db;
 
 SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS passenger_saved_places;
 DROP TABLE IF EXISTS driver_change_requests;
 DROP TABLE IF EXISTS rides;
 DROP TABLE IF EXISTS drivers;
@@ -33,14 +34,37 @@ CREATE TABLE admins (
 -- Passengers
 -- -------------------------------------------------------------
 CREATE TABLE passengers (
-  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  name          VARCHAR(100)  NOT NULL,
-  email         VARCHAR(150)  NOT NULL UNIQUE,
-  phone         VARCHAR(20)   NOT NULL,
-  password_hash VARCHAR(255)  NOT NULL,
-  status        ENUM('active','suspended') NOT NULL DEFAULT 'active',
-  created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  id                INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name              VARCHAR(100)  NOT NULL,
+  email             VARCHAR(150)  NOT NULL UNIQUE,
+  phone             VARCHAR(20)   NOT NULL,
+  password_hash     VARCHAR(255)  NOT NULL,
+  profile_photo     VARCHAR(255)  NULL,          -- path relative to project root, e.g. uploads/passengers/ab12.jpg
+  date_of_birth     DATE          NULL,
+  gender            ENUM('male','female') NULL,
+  emergency_name    VARCHAR(100)  NULL,
+  emergency_phone   VARCHAR(20)   NULL,
+  preferred_payment ENUM('cash','card','wallet') NOT NULL DEFAULT 'cash',
+  status            ENUM('active','suspended') NOT NULL DEFAULT 'active',
+  status_note       VARCHAR(255)  NULL,          -- admin reason shown to the passenger when suspended
+  last_login_at     DATETIME      NULL,
+  created_at        DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at        DATETIME      NULL ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_passengers_status (status)
+) ENGINE=InnoDB;
+
+-- -------------------------------------------------------------
+-- Passenger saved places (Home, Work, favourites) for quick booking
+-- -------------------------------------------------------------
+CREATE TABLE passenger_saved_places (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  passenger_id  INT UNSIGNED  NOT NULL,
+  label         VARCHAR(40)   NOT NULL,       -- 'Home', 'Work' or a custom name
+  address       VARCHAR(255)  NOT NULL,
+  note          VARCHAR(120)  NULL,           -- e.g. "Lobby B, guard house"
+  created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_places_passenger FOREIGN KEY (passenger_id) REFERENCES passengers(id) ON DELETE CASCADE,
+  UNIQUE KEY uq_place_label (passenger_id, label)
 ) ENGINE=InnoDB;
 
 -- -------------------------------------------------------------

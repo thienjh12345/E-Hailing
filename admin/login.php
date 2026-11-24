@@ -48,6 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <main class="login-panel">
         <form class="login-card" method="post" novalidate>
+            <a class="back-home" href="<?= e(url('index.php?as=admin')) ?>">&larr; Back to home</a>
             <div class="login-brand">
                 <?= crab_logo(36) ?>
                 <span class="brand-name"><?= e(strtolower(APP_NAME)) ?></span>

@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif (!$d['is_online'] && $days !== null && $days < 0) {
             flash('error', 'Your driving licence has expired. Update it under Licence & vehicle before going online.');
         } else {
-            $pdo->prepare('UPDATE drivers SET is_online = 1 - is_online WHERE id = ? AND status = \'approved\'')->execute([$d['id']]);
+            $pdo->prepare('UPDATE drivers SET is_online = 1 - is_online, updated_at = updated_at WHERE id = ? AND status = \'approved\'')->execute([$d['id']]);
             flash('success', $d['is_online'] ? 'You are now offline.' : 'You are online — new ride requests will come to you.');
         }
     } elseif ($action === 'cancel_request') {
@@ -35,8 +35,10 @@ $lastReviewed = $history[0] ?? null;
 $daysLeft = license_days_left($d['license_expiry']);
 
 $s = $pdo->prepare("
-    SELECT r.id, r.pickup_address, r.dropoff_address, r.fare, r.status, r.requested_at, r.rating
-    FROM rides r WHERE r.driver_id = ? ORDER BY r.requested_at DESC LIMIT 6
+    SELECT r.id, r.pickup_address, r.dropoff_address, r.fare, r.status, r.requested_at, r.rating,
+           p.name AS passenger_name, p.profile_photo AS passenger_photo
+    FROM rides r JOIN passengers p ON p.id = r.passenger_id
+    WHERE r.driver_id = ? ORDER BY r.requested_at DESC LIMIT 6
 ");
 $s->execute([$d['id']]);
 $trips = $s->fetchAll();
@@ -111,11 +113,12 @@ driver_header('Home', 'home');
         <header class="card-head"><div><h2>Recent trips</h2><p class="muted">Your latest 6 rides</p></div></header>
         <div class="table-wrap">
             <table class="table">
-                <thead><tr><th>Trip</th><th>Route</th><th class="num">Fare</th><th>Rating</th><th>Status</th></tr></thead>
+                <thead><tr><th>Trip</th><th>Passenger</th><th>Route</th><th class="num">Fare</th><th>Their rating</th><th>Status</th></tr></thead>
                 <tbody>
                 <?php foreach ($trips as $t): ?>
                     <tr>
                         <td class="mono">#<?= (int)$t['id'] ?><small class="muted block ago"><?= e(time_ago($t['requested_at'])) ?></small></td>
+                        <td><div class="person"><?= avatar($t['passenger_name'], $t['passenger_photo']) ?><span><?= e($t['passenger_name']) ?></span></div></td>
                         <td class="route"><span><?= e($t['pickup_address']) ?></span><span class="muted">→ <?= e($t['dropoff_address']) ?></span></td>
                         <td class="num"><?= e(money($t['fare'])) ?></td>
                         <td><?= $t['rating'] ? '<span class="rating">' . icon('star', 14) . ' ' . (int)$t['rating'] . '</span>' : '<span class="muted">—</span>' ?></td>
@@ -123,7 +126,7 @@ driver_header('Home', 'home');
                     </tr>
                 <?php endforeach; ?>
                 <?php if (!$trips): ?>
-                    <tr><td colspan="5" class="empty">No trips yet<?= $d['status'] === 'approved' ? ' — go online to receive ride requests.' : '. You can start driving once you\'re approved.' ?></td></tr>
+                    <tr><td colspan="6" class="empty">No trips yet<?= $d['status'] === 'approved' ? ' — go online to receive ride requests.' : '. You can start driving once you\'re approved.' ?></td></tr>
                 <?php endif; ?>
                 </tbody>
             </table>

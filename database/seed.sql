@@ -242,3 +242,54 @@ UPDATE drivers SET status_note='Repeated passenger complaints — under investig
 INSERT INTO driver_change_requests (driver_id, changes, created_at)
 SELECT id, '{"vehicle_model":"Proton X70","plate_no":"WTA 3388","vehicle_color":"Black","vehicle_year":2024}', NOW() - INTERVAL 3 HOUR
 FROM drivers WHERE email='tan.boon.huat@crabdriver.com';
+
+-- -------------------------------------------------------------
+-- Passenger profile details (passenger portal)
+-- -------------------------------------------------------------
+UPDATE passengers SET date_of_birth='1981-04-01', gender='female', preferred_payment='wallet', emergency_name=NULL, emergency_phone=NULL WHERE email='aisyah.rahman@mail.com';
+UPDATE passengers SET date_of_birth='2003-02-16', gender='male', preferred_payment='wallet', emergency_name='Ahmad (sibling)', emergency_phone='012-6245104' WHERE email='wei.jie.tan@mail.com';
+UPDATE passengers SET date_of_birth='1978-09-14', gender='female', preferred_payment='cash', emergency_name='Lina (parent)', emergency_phone='015-9017868' WHERE email='priya.nair@mail.com';
+UPDATE passengers SET date_of_birth='1987-02-12', gender='male', preferred_payment='cash', emergency_name=NULL, emergency_phone=NULL WHERE email='muhammad.haziq@mail.com';
+UPDATE passengers SET date_of_birth='2000-05-21', gender='female', preferred_payment='card', emergency_name='Grace (spouse)', emergency_phone='014-3927794' WHERE email='chloe.lim@mail.com';
+UPDATE passengers SET date_of_birth='1977-08-25', gender='male', preferred_payment='wallet', emergency_name='Hassan (sibling)', emergency_phone='019-4213611' WHERE email='arjun.pillai@mail.com';
+UPDATE passengers SET date_of_birth='1982-02-08', gender='female', preferred_payment='cash', emergency_name=NULL, emergency_phone=NULL WHERE email='nurul.izzah@mail.com';
+UPDATE passengers SET date_of_birth='1990-04-09', gender='male', preferred_payment='cash', emergency_name='Kumar (sibling)', emergency_phone='017-7042079' WHERE email='jason.wong@mail.com';
+UPDATE passengers SET date_of_birth='2002-06-04', gender='female', preferred_payment='wallet', emergency_name='Lina (spouse)', emergency_phone='015-9363760' WHERE email='siti.aminah@mail.com';
+UPDATE passengers SET date_of_birth='1995-06-13', gender='male', preferred_payment='cash', emergency_name=NULL, emergency_phone=NULL WHERE email='daniel.ong@mail.com';
+UPDATE passengers SET date_of_birth='1991-11-24', gender='female', preferred_payment='card', emergency_name='Kumar (spouse)', emergency_phone='011-4350779' WHERE email='mei.ling.chew@mail.com';
+UPDATE passengers SET date_of_birth='1986-06-21', gender='male', preferred_payment='wallet', emergency_name='Hassan (spouse)', emergency_phone='016-6530604' WHERE email='hafiz.ismail@mail.com';
+UPDATE passengers SET date_of_birth='1977-05-05', gender='female', preferred_payment='card', emergency_name=NULL, emergency_phone=NULL WHERE email='kavitha.rao@mail.com';
+UPDATE passengers SET date_of_birth='2000-12-27', gender='male', preferred_payment='cash', emergency_name='Lina (sibling)', emergency_phone='016-1100274' WHERE email='ryan.teo@mail.com';
+UPDATE passengers SET date_of_birth='2004-08-06', gender='female', preferred_payment='cash', emergency_name='Lina (sibling)', emergency_phone='014-6477623' WHERE email='farah.aziz@mail.com';
+UPDATE passengers SET date_of_birth='1999-07-17', gender='male', preferred_payment='cash', emergency_name=NULL, emergency_phone=NULL WHERE email='marcus.lee@mail.com';
+UPDATE passengers SET date_of_birth='1998-02-10', gender='female', preferred_payment='cash', emergency_name='Kumar (parent)', emergency_phone='012-6081364' WHERE email='liyana.hamid@mail.com';
+UPDATE passengers SET date_of_birth='1993-02-03', gender='male', preferred_payment='cash', emergency_name='Kumar (parent)', emergency_phone='018-8128291' WHERE email='kelvin.goh@mail.com';
+UPDATE passengers SET date_of_birth='2002-08-12', gender='female', preferred_payment='card', emergency_name=NULL, emergency_phone=NULL WHERE email='deepa.menon@mail.com';
+UPDATE passengers SET date_of_birth='1978-03-10', gender='male', preferred_payment='wallet', emergency_name='Lina (spouse)', emergency_phone='012-5669605' WHERE email='amir.firdaus@mail.com';
+UPDATE passengers SET status_note='Multiple unpaid cash fares reported by drivers.' WHERE status='suspended';
+
+INSERT INTO passenger_saved_places (passenger_id, label, address, note)
+SELECT id, 'Home', 'No. 114, Wangsa Maju, 53300 Kuala Lumpur', NULL FROM passengers WHERE email='aisyah.rahman@mail.com'
+UNION ALL SELECT id, 'Work', 'Sunway University, Bandar Sunway', 'Main lobby drop-off' FROM passengers WHERE email='aisyah.rahman@mail.com'
+UNION ALL SELECT id, 'Home', 'No. 50, Bangsar, 59100 Kuala Lumpur', NULL FROM passengers WHERE email='priya.nair@mail.com'
+UNION ALL SELECT id, 'Work', 'Sunway University, Bandar Sunway', 'Main lobby drop-off' FROM passengers WHERE email='muhammad.haziq@mail.com'
+UNION ALL SELECT id, 'Home', 'No. 91, Taman Desa, 58100 Kuala Lumpur', NULL FROM passengers WHERE email='chloe.lim@mail.com'
+UNION ALL SELECT id, 'Home', 'No. 102, Kota Damansara, 47810 Petaling Jaya', NULL FROM passengers WHERE email='nurul.izzah@mail.com'
+UNION ALL SELECT id, 'Work', 'TAR UMT, Jalan Genting Kelang', 'Main lobby drop-off' FROM passengers WHERE email='nurul.izzah@mail.com'
+UNION ALL SELECT id, 'Home', 'No. 20, Taman Desa, 58100 Kuala Lumpur', NULL FROM passengers WHERE email='siti.aminah@mail.com'
+UNION ALL SELECT id, 'Work', 'Menara KL, Jalan Punchak', 'Main lobby drop-off' FROM passengers WHERE email='daniel.ong@mail.com'
+UNION ALL SELECT id, 'Home', 'No. 74, Setapak, 53300 Kuala Lumpur', NULL FROM passengers WHERE email='mei.ling.chew@mail.com'
+UNION ALL SELECT id, 'Home', 'No. 98, Wangsa Maju, 53300 Kuala Lumpur', NULL FROM passengers WHERE email='kavitha.rao@mail.com'
+UNION ALL SELECT id, 'Work', 'KL Sentral, Jalan Stesen Sentral', 'Main lobby drop-off' FROM passengers WHERE email='kavitha.rao@mail.com'
+UNION ALL SELECT id, 'Home', 'No. 47, Wangsa Maju, 53300 Kuala Lumpur', NULL FROM passengers WHERE email='farah.aziz@mail.com'
+UNION ALL SELECT id, 'Work', 'Mid Valley City, Lingkaran Syed Putra', 'Main lobby drop-off' FROM passengers WHERE email='marcus.lee@mail.com'
+UNION ALL SELECT id, 'Home', 'No. 43, SS15, 47500 Subang Jaya', NULL FROM passengers WHERE email='liyana.hamid@mail.com'
+UNION ALL SELECT id, 'Home', 'No. 79, Puchong Jaya, 47100 Puchong', NULL FROM passengers WHERE email='deepa.menon@mail.com'
+UNION ALL SELECT id, 'Work', 'Mid Valley City, Lingkaran Syed Putra', 'Main lobby drop-off' FROM passengers WHERE email='deepa.menon@mail.com';
+
+-- Keep each driver's overall rating consistent with the ratings passengers gave their trips
+UPDATE drivers SET rating = (SELECT ROUND(AVG(r.rating), 2) FROM rides r WHERE r.driver_id = drivers.id AND r.rating IS NOT NULL);
+
+-- Demo data loading above should not count as "profile updated"
+UPDATE drivers    SET updated_at = NULL;
+UPDATE passengers SET updated_at = NULL;

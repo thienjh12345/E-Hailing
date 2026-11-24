@@ -25,7 +25,7 @@ function require_admin(): array
 {
     $admin = current_admin();
     if (!$admin) {
-        redirect('admin/login.php');
+        redirect('index.php?as=admin');
     }
     return $admin;
 }

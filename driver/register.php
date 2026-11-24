@@ -65,6 +65,7 @@ $minYear = (int)date('Y') - MAX_VEHICLE_AGE;
 
     <main class="login-panel">
         <form class="login-card wide" method="post" novalidate>
+            <a class="back-home" href="<?= e(url('index.php?as=driver')) ?>">&larr; Back to home</a>
             <div class="login-brand">
                 <?= crab_logo(36) ?>
                 <span class="brand-name"><?= e(strtolower(APP_NAME)) ?></span>

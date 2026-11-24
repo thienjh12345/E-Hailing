@@ -55,7 +55,7 @@ function status_form(array $d, string $action, string $label, string $class, boo
     $h = '<form method="post" action="' . e(url('admin/drivers.php')) . '" class="status-form">' . csrf_field()
         . '<input type="hidden" name="id" value="' . (int)$d['id'] . '"><input type="hidden" name="back" value="driver">';
     if ($withNote) {
-        $h .= '<input type="text" name="note" maxlength="255" placeholder="Reason shown to the driver (optional)" aria-label="Reason for ' . e($label) . '">';
+        $h .= '<input type="text" name="note" maxlength="255" placeholder="Reason (optional)" title="Shown to the driver in their portal" aria-label="Reason for ' . e($label) . '">';
     }
     return $h . '<button class="btn btn-sm ' . $class . '" name="action" value="' . e($action) . '"'
         . ($confirm ? ' data-confirm="' . e($confirm) . '"' : '') . '>' . e($label) . '</button></form>';

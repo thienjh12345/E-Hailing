@@ -39,7 +39,7 @@ function require_driver(): array
 {
     $d = current_driver();
     if (!$d) {
-        redirect('driver/login.php');
+        redirect('index.php?as=driver');
     }
     return $d;
 }
@@ -61,7 +61,7 @@ function logout_driver(): void
 {
     // Going off duty when logging out.
     if ($id = $_SESSION['driver_id'] ?? null) {
-        db()->prepare('UPDATE drivers SET is_online = 0 WHERE id = ?')->execute([$id]);
+        db()->prepare('UPDATE drivers SET is_online = 0, updated_at = updated_at WHERE id = ?')->execute([$id]);
     }
     $_SESSION = [];
     if (ini_get('session.use_cookies')) {

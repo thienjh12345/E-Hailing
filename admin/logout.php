@@ -6,4 +6,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
     logout_admin();
 }
-redirect('admin/login.php');
+redirect('index.php?as=admin');
