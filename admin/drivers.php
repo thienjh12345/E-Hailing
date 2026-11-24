@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/../includes/admin_auth.php';
 require __DIR__ . '/../includes/admin_layout.php';
+require __DIR__ . '/../includes/driver_profile.php';
 require_admin();
 
 $pdo = db();
@@ -30,26 +31,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         flash('error', "{$driver['name']} is currently {$driver['status']}, so they can't be {$transitions[$action][2]}.");
     } else {
         [, $newStatus, $verb] = $transitions[$action];
+        // Optional reason the driver sees in their portal (only kept for reject/suspend).
+        $note = mb_substr(trim((string)($_POST['note'] ?? '')), 0, 255);
+        $note = in_array($newStatus, ['rejected', 'suspended'], true) && $note !== '' ? $note : null;
         // Suspended/rejected drivers are forced offline.
-        $pdo->prepare('UPDATE drivers SET status = ?, is_online = IF(? = "approved", is_online, 0) WHERE id = ?')
-            ->execute([$newStatus, $newStatus, $id]);
+        $pdo->prepare('UPDATE drivers SET status = ?, status_note = ?, is_online = IF(? = "approved", is_online, 0) WHERE id = ?')
+            ->execute([$newStatus, $note, $newStatus, $id]);
         flash('success', "{$driver['name']} has been $verb.");
     }
 
     if (($_POST['back'] ?? '') === 'dashboard') redirect('admin/index.php');
+    if (($_POST['back'] ?? '') === 'driver') redirect('admin/driver.php?id=' . $id);
     redirect('admin/drivers.php' . safe_qs($_POST['qs'] ?? ''));
 }
 
 /* ---------------- Listing ---------------- */
 
-$statuses = ['all' => 'All', 'pending' => 'Pending', 'approved' => 'Approved', 'suspended' => 'Suspended', 'rejected' => 'Rejected'];
+$statuses = ['all' => 'All', 'pending' => 'Pending', 'approved' => 'Approved', 'suspended' => 'Suspended', 'rejected' => 'Rejected', 'updates' => 'Profile updates'];
 $status = $_GET['status'] ?? 'all';
 if (!isset($statuses[$status])) $status = 'all';
 $q = trim((string)($_GET['q'] ?? ''));
 
 $where = [];
 $params = [];
-if ($status !== 'all') { $where[] = 'd.status = ?'; $params[] = $status; }
+if ($status === 'updates') {
+    $where[] = "EXISTS (SELECT 1 FROM driver_change_requests c WHERE c.driver_id = d.id AND c.status = 'pending')";
+} elseif ($status !== 'all') {
+    $where[] = 'd.status = ?'; $params[] = $status;
+}
 if ($q !== '') {
     $where[] = '(d.name LIKE ? OR d.email LIKE ? OR d.phone LIKE ? OR d.plate_no LIKE ?)';
     array_push($params, "%$q%", "%$q%", "%$q%", "%$q%");
@@ -58,6 +67,7 @@ $whereSql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
 $counts = $pdo->query('SELECT status, COUNT(*) FROM drivers GROUP BY status')->fetchAll(PDO::FETCH_KEY_PAIR);
 $counts['all'] = array_sum($counts);
+$counts['updates'] = (int)$pdo->query("SELECT COUNT(DISTINCT driver_id) FROM driver_change_requests WHERE status = 'pending'")->fetchColumn();
 
 $total = $pdo->prepare("SELECT COUNT(*) FROM drivers d $whereSql");
 $total->execute($params);
@@ -66,7 +76,8 @@ $total->execute($params);
 $stmt = $pdo->prepare("
     SELECT d.*,
            (SELECT COUNT(*) FROM rides r WHERE r.driver_id = d.id AND r.status = 'completed') AS trips,
-           (SELECT COALESCE(SUM(fare),0) FROM rides r WHERE r.driver_id = d.id AND r.status = 'completed') AS earned
+           (SELECT COALESCE(SUM(fare),0) FROM rides r WHERE r.driver_id = d.id AND r.status = 'completed') AS earned,
+           (SELECT COUNT(*) FROM driver_change_requests c WHERE c.driver_id = d.id AND c.status = 'pending') AS has_request
     FROM drivers d
     $whereSql
     ORDER BY FIELD(d.status, 'pending') DESC, d.created_at DESC
@@ -75,7 +86,7 @@ $stmt = $pdo->prepare("
 $stmt->execute($params);
 $drivers = $stmt->fetchAll();
 
-$vehicleLabels = ['car' => 'Crab Car', 'premium' => 'Crab Premium', 'bike' => 'Crab Bike'];
+$vehicleLabels = VEHICLE_TYPES;
 $qs = query_with([]) === '?' ? '' : query_with([]);
 
 admin_header('Drivers', 'drivers');
@@ -103,11 +114,11 @@ admin_header('Drivers', 'drivers');
             </thead>
             <tbody>
             <?php foreach ($drivers as $d): ?>
-                <tr>
+                <tr class="clickable" data-href="<?= e(url('admin/driver.php?id=' . $d['id'])) ?>">
                     <td>
                         <div class="person">
-                            <span class="avatar"><?= e(initials($d['name'])) ?><?php if ($d['is_online'] && $d['status'] === 'approved'): ?><i class="online-dot" title="Online"></i><?php endif; ?></span>
-                            <div><strong><?= e($d['name']) ?></strong><small class="muted block"><?= e($d['phone']) ?> · <?= e($d['email']) ?></small></div>
+                            <span class="avatar-wrap"><?= avatar($d['name'], $d['profile_photo']) ?><?php if ($d['is_online'] && $d['status'] === 'approved'): ?><i class="online-dot" title="Online"></i><?php endif; ?></span>
+                            <div><a class="strong-link" href="<?= e(url('admin/driver.php?id=' . $d['id'])) ?>"><?= e($d['name']) ?></a><small class="muted block"><?= e($d['phone']) ?> · <?= e($d['email']) ?></small></div>
                         </div>
                     </td>
                     <td><?= e($d['vehicle_model']) ?><small class="muted block"><span class="plate"><?= e($d['plate_no']) ?></span> <?= e($vehicleLabels[$d['vehicle_type']] ?? $d['vehicle_type']) ?></small></td>
@@ -115,7 +126,7 @@ admin_header('Drivers', 'drivers');
                     <td class="num"><?= (int)$d['trips'] ?></td>
                     <td class="num"><?= e(money($d['earned'])) ?></td>
                     <td><?= $d['rating'] ? '<span class="rating">' . icon('star', 14) . ' ' . e($d['rating']) . '</span>' : '<span class="muted">—</span>' ?></td>
-                    <td><?= badge($d['status']) ?><small class="muted block">Joined <?= e(fmt_datetime($d['created_at'], 'd M Y')) ?></small></td>
+                    <td><?= badge($d['status']) ?><?php if ($d['has_request']): ?> <span class="badge badge-update" title="Profile change waiting for review">Update</span><?php endif; ?><small class="muted block">Joined <?= e(fmt_datetime($d['created_at'], 'd M Y')) ?></small></td>
                     <td class="actions-col">
                         <form method="post" class="row-actions">
                             <?= csrf_field() ?>

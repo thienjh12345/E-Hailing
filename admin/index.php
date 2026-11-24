@@ -26,6 +26,7 @@ $drv = $pdo->query("
     FROM drivers
 ")->fetch();
 
+$profileRequests = (int)$pdo->query("SELECT COUNT(*) FROM driver_change_requests WHERE status = 'pending'")->fetchColumn();
 $paxTotal = (int)$pdo->query("SELECT COUNT(*) FROM passengers")->fetchColumn();
 $paxNew   = (int)$pdo->query("SELECT COUNT(*) FROM passengers WHERE created_at >= CURDATE() - INTERVAL 6 DAY")->fetchColumn();
 
@@ -104,7 +105,7 @@ $liveRides = $pdo->query("
 ")->fetchAll();
 
 $pendingDrivers = $pdo->query("
-    SELECT id, name, vehicle_model, plate_no, vehicle_type, created_at
+    SELECT id, name, profile_photo, vehicle_model, plate_no, vehicle_type, created_at
     FROM drivers WHERE status='pending' ORDER BY created_at ASC LIMIT 5
 ")->fetchAll();
 
@@ -146,6 +147,13 @@ admin_header('Dashboard', 'dashboard');
     <a class="callout" href="<?= e(url('admin/drivers.php?status=pending')) ?>">
         <?= icon('alert') ?>
         <span><strong><?= (int)$drv['pending'] ?> driver application<?= $drv['pending'] > 1 ? 's' : '' ?></strong> waiting for review</span>
+        <span class="callout-go">Review <?= icon('arrow', 16) ?></span>
+    </a>
+<?php endif; ?>
+<?php if ($profileRequests > 0): ?>
+    <a class="callout" href="<?= e(url('admin/drivers.php?status=updates')) ?>">
+        <?= icon('inbox') ?>
+        <span><strong><?= $profileRequests ?> profile change<?= $profileRequests > 1 ? 's' : '' ?></strong> from drivers waiting for approval</span>
         <span class="callout-go">Review <?= icon('arrow', 16) ?></span>
     </a>
 <?php endif; ?>
@@ -217,9 +225,9 @@ admin_header('Dashboard', 'dashboard');
                 <ul class="people">
                     <?php foreach ($pendingDrivers as $d): ?>
                         <li>
-                            <span class="avatar"><?= e(initials($d['name'])) ?></span>
+                            <?= avatar($d['name'], $d['profile_photo']) ?>
                             <div class="people-text">
-                                <strong><?= e($d['name']) ?></strong>
+                                <a class="strong-link" href="<?= e(url('admin/driver.php?id=' . $d['id'])) ?>"><?= e($d['name']) ?></a>
                                 <small class="muted"><?= e($d['vehicle_model']) ?> · <?= e($d['plate_no']) ?> · applied <?= e(time_ago($d['created_at'])) ?></small>
                             </div>
                             <form method="post" action="<?= e(url('admin/drivers.php')) ?>" class="inline-actions">

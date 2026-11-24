@@ -218,3 +218,27 @@ INSERT INTO rides (passenger_id, driver_id, pickup_address, dropoff_address, pic
 (1, 4, 'IOI City Mall, Putrajaya', 'Mid Valley Megamall', 2.9701, 101.7135, 3.1176, 101.6774, 21.91, 30.29, 'wallet', 'completed', 5, NOW() - INTERVAL 209 MINUTE, NOW() - INTERVAL 149 MINUTE),
 (11, 1, 'TAR UMT, Setapak', 'KLCC, Kuala Lumpur', 3.216, 101.7266, 3.1579, 101.7116, 8.66, 14.39, 'wallet', 'completed', 5, NOW() - INTERVAL 332 MINUTE, NOW() - INTERVAL 305 MINUTE),
 (5, 7, 'Bangsar South', 'Pavilion KL', 3.1106, 101.6656, 3.149, 101.7134, 8.85, 25.59, 'wallet', 'completed', NULL, NOW() - INTERVAL 228 MINUTE, NOW() - INTERVAL 201 MINUTE);
+
+-- -------------------------------------------------------------
+-- Driver profile details (driver portal)
+-- -------------------------------------------------------------
+UPDATE drivers SET ic_no='900514-10-1283', address='No. 44, Shah Alam, 40000 Selangor', emergency_name='Ravi (parent)', emergency_phone='018-9316631', license_expiry=CURDATE() + INTERVAL 803 DAY, vehicle_color='Silver', vehicle_year=2021 WHERE email='ahmad.faizal@crabdriver.com';
+UPDATE drivers SET ic_no='831003-14-1666', address='No. 9, Shah Alam, 40000 Selangor', emergency_name='Siti (sibling)', emergency_phone='016-8943751', license_expiry=CURDATE() + INTERVAL 732 DAY, vehicle_color='White', vehicle_year=2019 WHERE email='lim.chee.keong@crabdriver.com';
+UPDATE drivers SET ic_no='830908-08-4930', address='No. 71, Setapak, 53300 Kuala Lumpur', emergency_name='Siti (sibling)', emergency_phone='012-6293176', license_expiry=CURDATE() + INTERVAL 322 DAY, vehicle_color='Black', vehicle_year=2023 WHERE email='rajesh.kumar@crabdriver.com';
+UPDATE drivers SET ic_no='911214-14-1979', address='No. 38, Jalan Ampang, 50450 Kuala Lumpur', emergency_name='Mei (sibling)', emergency_phone='018-4303398', license_expiry=CURDATE() + INTERVAL 1115 DAY, vehicle_color='Red', vehicle_year=2020 WHERE email='nor.azlina@crabdriver.com';
+UPDATE drivers SET ic_no='871102-07-2907', address='No. 20, Jalan Ampang, 50450 Kuala Lumpur', emergency_name='Aminah (parent)', emergency_phone='012-2983232', license_expiry=CURDATE() + INTERVAL 20 DAY, vehicle_color='Grey', vehicle_year=2022 WHERE email='tan.boon.huat@crabdriver.com';
+UPDATE drivers SET ic_no='821108-01-7332', address='No. 37, Bandar Sunway, 47500 Subang Jaya', emergency_name='Lee (parent)', emergency_phone='016-8830371', license_expiry=CURDATE() + INTERVAL 967 DAY, vehicle_color='Blue', vehicle_year=2021 WHERE email='zulkifli.hassan@crabdriver.com';
+UPDATE drivers SET ic_no='920624-08-4892', address='No. 80, Jalan Ampang, 50450 Kuala Lumpur', emergency_name='Ravi (sibling)', emergency_phone='015-5030531', license_expiry=CURDATE() + INTERVAL 314 DAY, vehicle_color='Black', vehicle_year=2024 WHERE email='wong.kah.wai@crabdriver.com';
+UPDATE drivers SET ic_no='800402-07-3147', address='No. 69, Setapak, 53300 Kuala Lumpur', emergency_name='Aminah (parent)', emergency_phone='011-6058277', license_expiry=CURDATE() + INTERVAL 366 DAY, vehicle_color='White', vehicle_year=2018 WHERE email='saravanan.muthu@crabdriver.com';
+UPDATE drivers SET ic_no='931006-01-4527', address='No. 3, Setapak, 53300 Kuala Lumpur', emergency_name='Mei (sibling)', emergency_phone='017-5865027', license_expiry=CURDATE() + INTERVAL 184 DAY, vehicle_color='Silver', vehicle_year=2017 WHERE email='hidayah.yusof@crabdriver.com';
+UPDATE drivers SET ic_no='841116-14-3180', address='No. 38, Setapak, 53300 Kuala Lumpur', emergency_name='Kumar (sibling)', emergency_phone='016-2986414', license_expiry=CURDATE() + INTERVAL 343 DAY, vehicle_color='White', vehicle_year=2022 WHERE email='ong.jun.hao@crabdriver.com';
+UPDATE drivers SET ic_no='930517-10-4916', address='No. 64, Setapak, 53300 Kuala Lumpur', emergency_name='Mei (spouse)', emergency_phone='013-2834440', license_expiry=CURDATE() + INTERVAL 702 DAY, vehicle_color='Black', vehicle_year=2023 WHERE email='mohd.ridzuan@crabdriver.com';
+UPDATE drivers SET ic_no='890719-10-3511', address='No. 24, Cheras, 56000 Kuala Lumpur', emergency_name='Kumar (sibling)', emergency_phone='013-6115916', license_expiry=CURDATE() + INTERVAL 919 DAY, vehicle_color='Silver', vehicle_year=2021 WHERE email='cheryl.ng@crabdriver.com';
+UPDATE drivers SET ic_no='770418-10-3798', address='No. 47, Cheras, 56000 Kuala Lumpur', emergency_name='Aminah (sibling)', emergency_phone='016-9478151', license_expiry=CURDATE() + INTERVAL 664 DAY, vehicle_color='Grey', vehicle_year=2019 WHERE email='ganesh.pillay@crabdriver.com';
+UPDATE drivers SET status_note='Vehicle is older than the allowed age for Crab Car.' WHERE email='ganesh.pillay@crabdriver.com';
+UPDATE drivers SET status_note='Repeated passenger complaints — under investigation.' WHERE email='hidayah.yusof@crabdriver.com';
+
+-- A pending profile change request for the admin to review
+INSERT INTO driver_change_requests (driver_id, changes, created_at)
+SELECT id, '{"vehicle_model":"Proton X70","plate_no":"WTA 3388","vehicle_color":"Black","vehicle_year":2024}', NOW() - INTERVAL 3 HOUR
+FROM drivers WHERE email='tan.boon.huat@crabdriver.com';

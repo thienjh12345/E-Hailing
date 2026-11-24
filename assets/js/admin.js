@@ -82,3 +82,25 @@
         });
     });
 })();
+
+/* Profile photo: preview the chosen image before uploading */
+(function () {
+    'use strict';
+    document.querySelectorAll('[data-photo-input]').forEach(function (input) {
+        input.addEventListener('change', function () {
+            var file = input.files && input.files[0];
+            var drop = input.closest('.file-drop');
+            var card = input.closest('.photo-card');
+            var preview = card && card.querySelector('[data-photo-preview] .avatar');
+            drop.classList.toggle('chosen', !!file);
+            var label = drop.querySelector('strong');
+            if (label) label.textContent = file ? file.name : 'Choose a photo';
+            if (!file || !preview || !/^image\//.test(file.type)) return;
+            var img = document.createElement('img');
+            img.alt = '';
+            img.src = URL.createObjectURL(file);
+            preview.textContent = '';
+            preview.appendChild(img);
+        });
+    });
+})();

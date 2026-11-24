@@ -10,6 +10,7 @@ CREATE DATABASE IF NOT EXISTS crab_db
 USE crab_db;
 
 SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS driver_change_requests;
 DROP TABLE IF EXISTS rides;
 DROP TABLE IF EXISTS drivers;
 DROP TABLE IF EXISTS passengers;
@@ -46,19 +47,29 @@ CREATE TABLE passengers (
 -- Drivers (must be approved by an admin before taking rides)
 -- -------------------------------------------------------------
 CREATE TABLE drivers (
-  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  name          VARCHAR(100)  NOT NULL,
-  email         VARCHAR(150)  NOT NULL UNIQUE,
-  phone         VARCHAR(20)   NOT NULL,
-  password_hash VARCHAR(255)  NOT NULL,
-  license_no    VARCHAR(30)   NOT NULL,
-  vehicle_type  ENUM('car','premium','bike') NOT NULL DEFAULT 'car',
-  vehicle_model VARCHAR(80)   NOT NULL,
-  plate_no      VARCHAR(15)   NOT NULL UNIQUE,
-  status        ENUM('pending','approved','suspended','rejected') NOT NULL DEFAULT 'pending',
-  is_online     TINYINT(1)    NOT NULL DEFAULT 0,
-  rating        DECIMAL(3,2)  NULL,
-  created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name            VARCHAR(100)  NOT NULL,
+  email           VARCHAR(150)  NOT NULL UNIQUE,
+  phone           VARCHAR(20)   NOT NULL,
+  password_hash   VARCHAR(255)  NOT NULL,
+  profile_photo   VARCHAR(255)  NULL,          -- path relative to project root, e.g. uploads/drivers/ab12.jpg
+  ic_no           VARCHAR(14)   NULL,          -- MyKad number, 900101-14-5678
+  address         VARCHAR(255)  NULL,
+  emergency_name  VARCHAR(100)  NULL,
+  emergency_phone VARCHAR(20)   NULL,
+  license_no      VARCHAR(30)   NOT NULL,
+  license_expiry  DATE          NULL,
+  vehicle_type    ENUM('car','premium','bike') NOT NULL DEFAULT 'car',
+  vehicle_model   VARCHAR(80)   NOT NULL,
+  vehicle_color   VARCHAR(30)   NULL,
+  vehicle_year    SMALLINT UNSIGNED NULL,
+  plate_no        VARCHAR(15)   NOT NULL UNIQUE,
+  status          ENUM('pending','approved','suspended','rejected') NOT NULL DEFAULT 'pending',
+  status_note     VARCHAR(255)  NULL,          -- admin reason shown to the driver (rejection / suspension)
+  is_online       TINYINT(1)    NOT NULL DEFAULT 0,
+  rating          DECIMAL(3,2)  NULL,
+  created_at      DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at      DATETIME      NULL ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_drivers_status (status),
   INDEX idx_drivers_online (is_online)
 ) ENGINE=InnoDB;
@@ -87,6 +98,27 @@ CREATE TABLE rides (
   CONSTRAINT fk_rides_driver    FOREIGN KEY (driver_id)    REFERENCES drivers(id)    ON DELETE SET NULL,
   INDEX idx_rides_status (status),
   INDEX idx_rides_requested (requested_at)
+) ENGINE=InnoDB;
+
+-- -------------------------------------------------------------
+-- Driver profile change requests
+--   Once a driver is approved, changes to identity, licence or
+--   vehicle details must be re-checked by an admin. The driver
+--   submits the new values here; an admin approves (values are
+--   copied onto the drivers row) or rejects them with a note.
+-- -------------------------------------------------------------
+CREATE TABLE driver_change_requests (
+  id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  driver_id    INT UNSIGNED  NOT NULL,
+  changes      TEXT          NOT NULL,      -- JSON: {"plate_no": "WXY 1234", ...}
+  status       ENUM('pending','approved','rejected','cancelled') NOT NULL DEFAULT 'pending',
+  admin_note   VARCHAR(255)  NULL,
+  reviewed_by  INT UNSIGNED  NULL,
+  created_at   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  reviewed_at  DATETIME      NULL,
+  CONSTRAINT fk_dcr_driver FOREIGN KEY (driver_id)   REFERENCES drivers(id) ON DELETE CASCADE,
+  CONSTRAINT fk_dcr_admin  FOREIGN KEY (reviewed_by) REFERENCES admins(id)  ON DELETE SET NULL,
+  INDEX idx_dcr_status (status, driver_id)
 ) ENGINE=InnoDB;
 
 -- -------------------------------------------------------------
