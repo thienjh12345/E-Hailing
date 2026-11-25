@@ -113,7 +113,7 @@ passenger_header('Saved places', 'places');
             <?php endif; ?>
             <div class="form-grid one">
                 <?= form_field('label', 'Name', $v['label'], $errors, ['required' => true, 'placeholder' => 'e.g. Home, Work, Gym, Mum\'s house']) ?>
-                <?= form_field('address', 'Address', $v['address'], $errors, ['type' => 'textarea', 'required' => true, 'placeholder' => 'No. 12, Jalan Example, 50450 Kuala Lumpur']) ?>
+                <?= form_field('address', 'Address', $v['address'], $errors, ['type' => 'textarea', 'required' => true, 'placeholder' => 'No. 12, Jalan Lintas, 88300 Kota Kinabalu']) ?>
                 <?= form_field('note', 'Note for drivers', $v['note'], $errors, ['placeholder' => 'e.g. Wait at guard house, Block B lobby']) ?>
             </div>
             <div class="form-actions">

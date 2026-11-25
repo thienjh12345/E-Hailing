@@ -29,8 +29,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-driver_header('Password', 'security');
+driver_header('Settings', 'settings');
 ?>
+
+<?= settings_tabs('driver', 'password') ?>
 
 <section class="grid-main">
     <form class="card narrow" method="post" novalidate>

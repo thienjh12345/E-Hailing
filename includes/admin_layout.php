@@ -22,6 +22,7 @@ function admin_header(string $title, string $active = ''): void
         'rides'      => ['Rides',      'admin/rides.php',      'rides'],
         'drivers'    => ['Drivers',    'admin/drivers.php',    'driver'],
         'passengers' => ['Passengers', 'admin/passengers.php', 'users'],
+        'settings'   => ['Settings',   'admin/profile.php',    'settings'],
     ];
     ?>
 <!DOCTYPE html>
@@ -30,7 +31,8 @@ function admin_header(string $title, string $active = ''): void
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= e($title) ?> · <?= e(APP_NAME) ?> Admin</title>
-    <link rel="stylesheet" href="<?= e(url('assets/css/admin.css')) ?>">
+    <link rel="stylesheet" href="<?= e(asset('assets/css/admin.css')) ?>">
+    <?= theme_head() ?>
 </head>
 <body>
 <div class="app">
@@ -54,13 +56,7 @@ function admin_header(string $title, string $active = ''): void
         </nav>
 
         <div class="sidebar-foot">
-            <div class="me">
-                <span class="avatar"><?= e(initials($admin['name'])) ?></span>
-                <div class="me-text">
-                    <strong><?= e($admin['name']) ?></strong>
-                    <small><?= e($admin['email']) ?></small>
-                </div>
-            </div>
+            <?= sidebar_me('admin', $admin['name'], null, $admin['email'], $active === 'settings') ?>
             <form method="post" action="<?= e(url('admin/logout.php')) ?>">
                 <?= csrf_field() ?>
                 <button type="submit" class="nav-link logout"><?= icon('logout') ?><span>Log out</span></button>
@@ -73,7 +69,7 @@ function admin_header(string $title, string $active = ''): void
         <header class="topbar">
             <button class="icon-btn menu-btn" id="menuBtn" aria-label="Open menu" aria-controls="sidebar"><?= icon('menu') ?></button>
             <h1 class="page-title"><?= e($title) ?></h1>
-            <div class="topbar-right">
+            <div class="topbar-right"><?= theme_toggle() ?>
                 <span class="today"><?= e(date('l, j F Y')) ?></span>
             </div>
         </header>
@@ -92,7 +88,7 @@ function admin_footer(): void
         <footer class="footer">&copy; <?= date('Y') ?> <?= e(APP_NAME) ?> E-Hailing · Admin Console</footer>
     </div>
 </div>
-<script src="<?= e(url('assets/js/admin.js')) ?>"></script>
+<script src="<?= e(asset('assets/js/admin.js')) ?>"></script>
 </body>
 </html>
     <?php

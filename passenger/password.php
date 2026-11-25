@@ -29,8 +29,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-passenger_header('Password', 'security');
+passenger_header('Settings', 'settings');
 ?>
+
+<?= settings_tabs('passenger', 'password') ?>
 
 <section class="grid-main">
     <form class="card narrow" method="post" novalidate>

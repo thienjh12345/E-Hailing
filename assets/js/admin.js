@@ -104,3 +104,42 @@
         });
     });
 })();
+
+/* Light / dark theme switch (see theme_head() / theme_toggle() in includes/ui.php) */
+(function () {
+    'use strict';
+    var root = document.documentElement;
+    var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+
+    function current() {
+        return root.getAttribute('data-theme') || (mq && mq.matches ? 'dark' : 'light');
+    }
+    function updateLabels() {
+        var next = current() === 'dark' ? 'light' : 'dark';
+        document.querySelectorAll('[data-theme-toggle]').forEach(function (b) {
+            var text = 'Switch to ' + next + ' mode';
+            b.setAttribute('aria-label', text);
+            b.title = text;
+        });
+    }
+
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-theme-toggle]');
+        if (!btn) return;
+        var next = current() === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        try { localStorage.setItem('crab-theme', next); } catch (err) { /* private mode: still works for this page */ }
+        updateLabels();
+    });
+
+    // Keep the label right if the device switches theme while following the system
+    if (mq && mq.addEventListener) mq.addEventListener('change', updateLabels);
+    // Another tab changed the theme: follow it
+    window.addEventListener('storage', function (e) {
+        if (e.key === 'crab-theme' && (e.newValue === 'light' || e.newValue === 'dark')) {
+            root.setAttribute('data-theme', e.newValue);
+            updateLabels();
+        }
+    });
+    updateLabels();
+})();

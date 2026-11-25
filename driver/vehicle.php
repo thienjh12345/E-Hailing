@@ -60,7 +60,7 @@ driver_header('Licence & vehicle', 'vehicle');
             <div class="form-grid">
                 <?= form_field('vehicle_type', 'Service type', $v['vehicle_type'], $errors, ['type' => 'select', 'options' => VEHICLE_TYPES, 'required' => true]) ?>
                 <?= form_field('vehicle_model', 'Make & model', $v['vehicle_model'], $errors, ['required' => true, 'placeholder' => 'Perodua Myvi']) ?>
-                <?= form_field('plate_no', 'Plate number', $v['plate_no'], $errors, ['required' => true, 'placeholder' => 'WXY 1234']) ?>
+                <?= form_field('plate_no', 'Plate number', $v['plate_no'], $errors, ['required' => true, 'placeholder' => 'SAA 1234']) ?>
                 <?= form_field('vehicle_color', 'Colour', $v['vehicle_color'], $errors, ['required' => true, 'placeholder' => 'Silver']) ?>
                 <?= form_field('vehicle_year', 'Year of manufacture', $v['vehicle_year'], $errors, ['type' => 'number', 'required' => true, 'help' => "$minYear or newer", 'attrs' => 'min="' . $minYear . '" max="' . (date('Y') + 1) . '"']) ?>
             </div>

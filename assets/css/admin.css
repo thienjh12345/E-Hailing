@@ -34,7 +34,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-theme="light"]) {
         --brand-ink:  #F87171;
         --brand-soft: #2A1416;
         --brand-line: #5B2226;
@@ -57,6 +57,31 @@
         --shadow: 0 1px 2px rgba(0, 0, 0, .3);
         color-scheme: dark;
     }
+}
+
+/* Theme switch: the user picked dark (overrides a light system setting). Same tokens as above. */
+:root[data-theme="dark"] {
+    --brand-ink:  #F87171;
+    --brand-soft: #2A1416;
+    --brand-line: #5B2226;
+
+    --bg:        #111113;
+    --surface:   #1C1C20;
+    --surface-2: #222227;
+    --line:      #2E2E34;
+    --line-soft: #26262B;
+    --ink:       #F4F4F5;
+    --ink-2:     #D4D4D8;
+    --muted:     #9CA3AF;
+
+    --ok:   #4ADE80;  --ok-bg:   #0F2A1A;
+    --warn: #FBBF24;  --warn-bg: #2B2110;
+    --info: #93C5FD;  --info-bg: #13213B;
+    --bad:  #FCA5A5;  --bad-bg:  #2E1517;
+    --neutral: #D4D4D8; --neutral-bg: #2A2A30;
+
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3);
+    color-scheme: dark;
 }
 
 /* ---------- Base ---------- */
@@ -674,3 +699,47 @@ button { font: inherit; color: inherit; }
 /* "Back to home" link on the portal sign-in / register pages */
 .back-home { align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 4px; padding: 4px 8px 4px 0; color: var(--muted); font-weight: 600; font-size: 13px; }
 .back-home:hover { color: var(--brand-ink); }
+
+/* Driver earnings page */
+.kpi-link { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; }
+.kpi-link:hover { text-decoration: underline; }
+.toolbar .small { margin: 0; }
+
+/* Friendly empty state inside a card (icon, headline, hint) */
+.empty-state { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 28px 16px 16px; }
+.empty-state .empty-icon { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: var(--line-soft); color: var(--muted); margin-bottom: 4px; }
+.empty-state p { margin: 0; max-width: 420px; }
+.empty-state.tall { min-height: 260px; justify-content: center; padding-top: 16px; }
+
+/* =============================================================
+   Light / dark theme switch
+   ============================================================= */
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.theme-toggle { color: var(--ink-2); flex-shrink: 0; }
+.theme-toggle:hover { color: var(--brand-ink); border-color: var(--brand-line); }
+.theme-toggle.floating { position: absolute; top: 20px; right: 20px; z-index: 2; }
+.login-panel { position: relative; }
+
+/* Light theme shows the moon ("switch to dark"); dark theme shows the sun ("switch to light"). */
+.theme-toggle .i-moon, .theme-toggle .i-sun { display: inline-grid; place-items: center; }
+.theme-toggle .i-sun { display: none; }
+:root[data-theme="dark"] .theme-toggle .i-moon { display: none; }
+:root[data-theme="dark"] .theme-toggle .i-sun  { display: inline-grid; }
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .theme-toggle .i-moon { display: none; }
+    :root:not([data-theme="light"]) .theme-toggle .i-sun  { display: inline-grid; }
+}
+
+
+/* =============================================================
+   Settings (Profile + Password tabs) and the clickable account block
+   ============================================================= */
+.settings-tabs { align-self: flex-start; }
+.settings-tabs .tab .icon { vertical-align: -2px; }
+
+a.me { border-radius: var(--radius-sm); margin: 0 0 6px; padding: 8px 10px; color: inherit; transition: background .12s; }
+a.me:hover { background: var(--line-soft); }
+a.me.active { background: var(--brand-soft); }
+a.me .me-text { flex: 1; min-width: 0; }
+.me-gear { color: var(--muted); display: inline-grid; place-items: center; flex-shrink: 0; }
+a.me:hover .me-gear, a.me.active .me-gear { color: var(--brand-ink); }

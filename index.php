@@ -71,16 +71,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= e(APP_NAME) ?> · Rides around the Klang Valley</title>
+    <title><?= e(APP_NAME) ?> · Rides across Malaysia</title>
     <meta name="description" content="Crab e-hailing — book rides, drive with Crab, or manage the platform.">
-    <link rel="stylesheet" href="<?= e(url('assets/css/admin.css')) ?>">
+    <link rel="stylesheet" href="<?= e(asset('assets/css/admin.css')) ?>">
+    <?= theme_head() ?>
 </head>
 <body class="login-page home-page">
     <div class="login-art">
         <div class="login-art-inner">
             <div class="home-brand"><?= crab_logo(48) ?><span>crab</span></div>
             <h2>Get there, the Crab way.</h2>
-            <p>Safe, affordable rides across the Klang Valley — with verified drivers you can see, track and rate.</p>
+            <p>Safe, affordable rides across Malaysia — from the Klang Valley to Kota Kinabalu — with verified drivers you can see, track and rate.</p>
             <ul class="home-points">
                 <li><?= icon('check', 18) ?> Every driver's licence and vehicle checked by our team</li>
                 <li><?= icon('check', 18) ?> See your driver's photo, car and plate before pick-up</li>
@@ -90,6 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <main class="login-panel">
+        <?= theme_toggle('floating') ?>
         <form class="login-card" method="post" novalidate>
             <div class="login-brand">
                 <?= crab_logo(36) ?>
@@ -131,5 +133,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </form>
     </main>
+<script src="<?= e(asset('assets/js/admin.js')) ?>"></script>
 </body>
 </html>

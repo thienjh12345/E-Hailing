@@ -55,8 +55,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $age = passenger_age($p['date_of_birth']);
-passenger_header('My profile', 'profile');
+passenger_header('Settings', 'settings');
 ?>
+
+<?= settings_tabs('passenger', 'profile') ?>
 
 <section class="grid-main">
     <form class="card" method="post" novalidate>

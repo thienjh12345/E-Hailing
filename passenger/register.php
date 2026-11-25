@@ -42,7 +42,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Create account · <?= e(APP_NAME) ?></title>
-    <link rel="stylesheet" href="<?= e(url('assets/css/admin.css')) ?>">
+    <link rel="stylesheet" href="<?= e(asset('assets/css/admin.css')) ?>">
+    <?= theme_head() ?>
 </head>
 <body class="login-page">
     <div class="login-art" aria-hidden="true">
@@ -58,6 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <main class="login-panel">
+        <?= theme_toggle('floating') ?>
         <form class="login-card" method="post" novalidate>
             <a class="back-home" href="<?= e(url('index.php?as=passenger')) ?>">&larr; Back to home</a>
             <div class="login-brand">
@@ -87,5 +89,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <button type="submit" class="btn btn-primary btn-block">Create account</button>
         </form>
     </main>
+<script src="<?= e(asset('assets/js/admin.js')) ?>"></script>
 </body>
 </html>

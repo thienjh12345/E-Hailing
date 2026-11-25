@@ -56,7 +56,7 @@ function driver_field_display(string $field, $value): string
  * Each returns null when the input can't be valid. (normalize_phone is in validation.php)
  * ------------------------------------------------------------------------- */
 
-/** "900101145678" → "900101-14-5678" (checks the birth date part too) */
+/** "900101145678" → "900101-12-5678" (checks the birth date part too) */
 function normalize_ic(string $raw): ?string
 {
     $d = preg_replace('/\D/', '', $raw);
@@ -67,7 +67,7 @@ function normalize_ic(string $raw): ?string
     return substr($d, 0, 6) . '-' . substr($d, 6, 2) . '-' . substr($d, 8);
 }
 
-/** "wxy1234" → "WXY 1234", "vb 88 a" → "VB 88A" */
+/** "saa1234" → "SAA 1234", "vb 88 a" → "VB 88A" */
 function normalize_plate(string $raw): ?string
 {
     $s = strtoupper(preg_replace('/[\s\-]+/', '', $raw));
@@ -117,7 +117,7 @@ function validate_driver_input(array $input, array $fields, ?int $driverId = nul
 
             case 'ic_no':
                 $n = normalize_ic($v);
-                if ($n === null) $errors[$f] = 'Enter your 12-digit MyKad number, e.g. 900101-14-5678.';
+                if ($n === null) $errors[$f] = 'Enter your 12-digit MyKad number, e.g. 900101-12-5678.';
                 else $v = $n;
                 break;
 
@@ -151,7 +151,7 @@ function validate_driver_input(array $input, array $fields, ?int $driverId = nul
 
             case 'plate_no':
                 $n = normalize_plate($v);
-                if ($n === null) $errors[$f] = 'Enter a valid plate number, e.g. WXY 1234.';
+                if ($n === null) $errors[$f] = 'Enter a valid plate number, e.g. SAA 1234.';
                 else $v = $n;
                 break;
 

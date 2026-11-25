@@ -73,8 +73,10 @@ $needsReview = in_array($d['status'], ['approved', 'suspended'], true);
 $pending = pending_change_request((int)$d['id']);
 $pendingIdentity = $pending ? array_intersect_key($pending['changes'], array_flip(DRIVER_IDENTITY_FIELDS)) : [];
 
-driver_header('My profile', 'profile');
+driver_header('Settings', 'settings');
 ?>
+
+<?= settings_tabs('driver', 'profile') ?>
 
 <?= driver_status_banner($d) ?>
 
@@ -114,7 +116,7 @@ driver_header('My profile', 'profile');
             <?php endif; ?>
             <div class="form-grid">
                 <?= form_field('name', 'Full name (as in MyKad)', $v['name'], $errors, ['required' => true, 'autocomplete' => 'name']) ?>
-                <?= form_field('ic_no', 'IC number (MyKad)', $v['ic_no'], $errors, ['required' => true, 'placeholder' => '900101-14-5678']) ?>
+                <?= form_field('ic_no', 'IC number (MyKad)', $v['ic_no'], $errors, ['required' => true, 'placeholder' => '900101-12-5678']) ?>
             </div>
             <div class="form-actions">
                 <button class="btn btn-outline"><?= $needsReview ? 'Request change' : 'Save' ?></button>

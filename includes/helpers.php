@@ -14,6 +14,17 @@ function url(string $path = ''): string
     return BASE_URL . '/' . ltrim($path, '/');
 }
 
+/**
+ * URL for a CSS/JS/image file with a version stamp (the file's last-modified time),
+ * e.g. /assets/css/admin.css?v=1764123456. When the file changes the URL changes,
+ * so browsers fetch the new version instead of using a stale cached copy.
+ */
+function asset(string $path): string
+{
+    $file = dirname(__DIR__) . '/' . ltrim($path, '/');
+    return url($path) . (is_file($file) ? '?v=' . filemtime($file) : '');
+}
+
 function redirect(string $path): void
 {
     header('Location: ' . url($path));

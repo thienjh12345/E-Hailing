@@ -77,7 +77,7 @@ CREATE TABLE drivers (
   phone           VARCHAR(20)   NOT NULL,
   password_hash   VARCHAR(255)  NOT NULL,
   profile_photo   VARCHAR(255)  NULL,          -- path relative to project root, e.g. uploads/drivers/ab12.jpg
-  ic_no           VARCHAR(14)   NULL,          -- MyKad number, 900101-14-5678
+  ic_no           VARCHAR(14)   NULL,          -- MyKad number, 900101-12-5678
   address         VARCHAR(255)  NULL,
   emergency_name  VARCHAR(100)  NULL,
   emergency_phone VARCHAR(20)   NULL,
@@ -134,7 +134,7 @@ CREATE TABLE rides (
 CREATE TABLE driver_change_requests (
   id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   driver_id    INT UNSIGNED  NOT NULL,
-  changes      TEXT          NOT NULL,      -- JSON: {"plate_no": "WXY 1234", ...}
+  changes      TEXT          NOT NULL,      -- JSON: {"plate_no": "SAA 1234", ...}
   status       ENUM('pending','approved','rejected','cancelled') NOT NULL DEFAULT 'pending',
   admin_note   VARCHAR(255)  NULL,
   reviewed_by  INT UNSIGNED  NULL,

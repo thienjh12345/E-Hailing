@@ -68,7 +68,7 @@ admin_header('Edit ' . $d['name'], 'drivers');
             <header class="card-head"><h2>Personal &amp; contact</h2></header>
             <div class="form-grid">
                 <?= form_field('name', 'Full name', $v['name'], $errors, ['required' => true]) ?>
-                <?= form_field('ic_no', 'IC number', $v['ic_no'], $errors, ['required' => true, 'placeholder' => '900101-14-5678']) ?>
+                <?= form_field('ic_no', 'IC number', $v['ic_no'], $errors, ['required' => true, 'placeholder' => '900101-12-5678']) ?>
                 <?= form_field('email', 'Email', $v['email'], $errors, ['type' => 'email', 'required' => true]) ?>
                 <?= form_field('phone', 'Mobile number', $v['phone'], $errors, ['type' => 'tel', 'required' => true]) ?>
                 <?= form_field('address', 'Home address', $v['address'], $errors, ['type' => 'textarea', 'class' => 'span-2']) ?>

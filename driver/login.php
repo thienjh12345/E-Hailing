@@ -34,18 +34,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Driver Login · <?= e(APP_NAME) ?></title>
-    <link rel="stylesheet" href="<?= e(url('assets/css/admin.css')) ?>">
+    <link rel="stylesheet" href="<?= e(asset('assets/css/admin.css')) ?>">
+    <?= theme_head() ?>
 </head>
 <body class="login-page">
     <div class="login-art" aria-hidden="true">
         <div class="login-art-inner">
             <?= crab_logo(56) ?>
             <h2>Drive with Crab.</h2>
-            <p>Flexible hours, weekly payouts, and passengers across the Klang Valley.</p>
+            <p>Flexible hours, weekly payouts, and passengers from the Klang Valley to Kota Kinabalu.</p>
         </div>
     </div>
 
     <main class="login-panel">
+        <?= theme_toggle('floating') ?>
         <form class="login-card" method="post" novalidate>
             <a class="back-home" href="<?= e(url('index.php?as=driver')) ?>">&larr; Back to home</a>
             <div class="login-brand">
@@ -76,5 +78,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <p class="login-alt">New to Crab? <a class="link" href="<?= e(url('driver/register.php')) ?>">Become a driver</a></p>
         </form>
     </main>
+<script src="<?= e(asset('assets/js/admin.js')) ?>"></script>
 </body>
 </html>

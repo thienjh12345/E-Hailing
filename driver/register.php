@@ -48,7 +48,8 @@ $minYear = (int)date('Y') - MAX_VEHICLE_AGE;
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Become a Driver · <?= e(APP_NAME) ?></title>
-    <link rel="stylesheet" href="<?= e(url('assets/css/admin.css')) ?>">
+    <link rel="stylesheet" href="<?= e(asset('assets/css/admin.css')) ?>">
+    <?= theme_head() ?>
 </head>
 <body class="login-page">
     <div class="login-art" aria-hidden="true">
@@ -64,6 +65,7 @@ $minYear = (int)date('Y') - MAX_VEHICLE_AGE;
     </div>
 
     <main class="login-panel">
+        <?= theme_toggle('floating') ?>
         <form class="login-card wide" method="post" novalidate>
             <a class="back-home" href="<?= e(url('index.php?as=driver')) ?>">&larr; Back to home</a>
             <div class="login-brand">
@@ -83,7 +85,7 @@ $minYear = (int)date('Y') - MAX_VEHICLE_AGE;
                 <legend>About you</legend>
                 <div class="form-grid">
                     <?= form_field('name', 'Full name (as in MyKad)', $v['name'], $errors, ['required' => true, 'autocomplete' => 'name', 'class' => 'span-2']) ?>
-                    <?= form_field('ic_no', 'IC number (MyKad)', $v['ic_no'], $errors, ['required' => true, 'placeholder' => '900101-14-5678']) ?>
+                    <?= form_field('ic_no', 'IC number (MyKad)', $v['ic_no'], $errors, ['required' => true, 'placeholder' => '900101-12-5678']) ?>
                     <?= form_field('phone', 'Mobile number', $v['phone'], $errors, ['type' => 'tel', 'required' => true, 'placeholder' => '012-3456789', 'autocomplete' => 'tel']) ?>
                     <?= form_field('email', 'Email', $v['email'], $errors, ['type' => 'email', 'required' => true, 'autocomplete' => 'email', 'class' => 'span-2']) ?>
                 </div>
@@ -102,7 +104,7 @@ $minYear = (int)date('Y') - MAX_VEHICLE_AGE;
                 <div class="form-grid">
                     <?= form_field('vehicle_type', 'Service type', $v['vehicle_type'], $errors, ['type' => 'select', 'options' => VEHICLE_TYPES, 'required' => true]) ?>
                     <?= form_field('vehicle_model', 'Make & model', $v['vehicle_model'], $errors, ['required' => true, 'placeholder' => 'Perodua Myvi']) ?>
-                    <?= form_field('plate_no', 'Plate number', $v['plate_no'], $errors, ['required' => true, 'placeholder' => 'WXY 1234']) ?>
+                    <?= form_field('plate_no', 'Plate number', $v['plate_no'], $errors, ['required' => true, 'placeholder' => 'SAA 1234']) ?>
                     <?= form_field('vehicle_color', 'Colour', $v['vehicle_color'], $errors, ['required' => true, 'placeholder' => 'Silver']) ?>
                     <?= form_field('vehicle_year', 'Year', $v['vehicle_year'], $errors, ['type' => 'number', 'required' => true, 'help' => "$minYear or newer", 'attrs' => 'min="' . $minYear . '" max="' . (date('Y') + 1) . '"']) ?>
                 </div>
@@ -125,5 +127,6 @@ $minYear = (int)date('Y') - MAX_VEHICLE_AGE;
             <button type="submit" class="btn btn-primary btn-block">Submit application</button>
         </form>
     </main>
+<script src="<?= e(asset('assets/js/admin.js')) ?>"></script>
 </body>
 </html>

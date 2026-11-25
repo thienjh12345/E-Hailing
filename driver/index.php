@@ -87,14 +87,14 @@ driver_header('Home', 'home');
 
 <section class="kpis">
     <article class="kpi">
-        <div class="kpi-top"><span class="kpi-label">Earnings this week</span><span class="kpi-icon"><?= icon('money') ?></span></div>
-        <div class="kpi-value"><?= e(money($stats['earned_week'])) ?></div>
-        <span class="delta"><?= $stats['trips_week'] ?> trips in the last 7 days</span>
+        <div class="kpi-top"><span class="kpi-label">Trips this week</span><span class="kpi-icon"><?= icon('rides') ?></span></div>
+        <div class="kpi-value"><?= $stats['trips_week'] ?></div>
+        <a class="delta kpi-link" href="<?= e(url('driver/earnings.php')) ?>">See your earnings <?= icon('arrow', 14) ?></a>
     </article>
     <article class="kpi">
-        <div class="kpi-top"><span class="kpi-label">Total trips</span><span class="kpi-icon"><?= icon('rides') ?></span></div>
+        <div class="kpi-top"><span class="kpi-label">Total trips</span><span class="kpi-icon"><?= icon('flag') ?></span></div>
         <div class="kpi-value"><?= $stats['trips'] ?></div>
-        <span class="delta"><?= e(money($stats['earned'])) ?> earned all-time</span>
+        <span class="delta">completed since you joined</span>
     </article>
     <article class="kpi">
         <div class="kpi-top"><span class="kpi-label">Rating</span><span class="kpi-icon"><?= icon('star') ?></span></div>

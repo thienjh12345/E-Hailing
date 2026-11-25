@@ -12,10 +12,10 @@ An e-hailing website that supposed to resembles like the application 'Grab'.
 3. Copy `config/config.example.php` to `config/config.php` and adjust the DB settings / `BASE_URL` if needed. (`config.php` is git-ignored.)
 4. Open **http://localhost/ehailing/E-Hailing/** — the homepage has one sign-in form: pick *Passenger*, *Driver* or *Admin*, sign in, and you land in that portal. Logging out (or opening a portal page while signed out) brings you back here with your role preselected (e.g. `index.php?as=driver`). The per-portal pages (`admin/login.php`, `driver/login.php`, `passenger/login.php`) still work too.
 
-**Already imported an older schema?** Run the files in `database/migrations/` that you haven't run yet, in order (`001_…`, then `002_…`), instead of re-importing — they add the new columns/tables without touching existing data.
+**Already imported an older schema?** Run the files in `database/migrations/` that you haven't run yet, in order (`001_…`, then `002_…`) — they add the new columns/tables without touching your existing data. To get the latest demo data (e.g. the Kota Kinabalu rides and drivers), simply re-import `schema.sql` and then `seed.sql` (this resets the database to the demo data).
 
 **Default admin login:** `admin@crab.com` / `admin123` — change it before going live.
-Demo drivers and passengers all use the password `password` — e.g. driver `tan.boon.huat@crabdriver.com` (has a pending profile change for the admin to review) and passenger `chloe.lim@mail.com` (has a live trip and trips to rate).
+The demo data covers two cities — the **Klang Valley** and **Kota Kinabalu, Sabah**. Each driver works in one city and every trip stays inside its driver's city. Demo drivers and passengers all use the password `password` — e.g. driver `tan.boon.huat@crabdriver.com` (has a pending profile change for the admin to review) and passenger `chloe.lim@mail.com` (has a live trip and trips to rate).
 
 ## Passenger Profile Management
 

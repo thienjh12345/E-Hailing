@@ -16,9 +16,8 @@ function passenger_header(string $title, string $active = ''): void
     $nav = [
         'home'     => ['Home',         'passenger/index.php',    'home'],
         'rides'    => ['My rides',     'passenger/rides.php',    'rides'],
-        'profile'  => ['My profile',   'passenger/profile.php',  'user'],
         'places'   => ['Saved places', 'passenger/places.php',   'pin'],
-        'security' => ['Password',     'passenger/password.php', 'lock'],
+        'settings' => ['Settings',     'passenger/profile.php',  'settings'],
     ];
     ?>
 <!DOCTYPE html>
@@ -27,7 +26,8 @@ function passenger_header(string $title, string $active = ''): void
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= e($title) ?> · <?= e(APP_NAME) ?></title>
-    <link rel="stylesheet" href="<?= e(url('assets/css/admin.css')) ?>">
+    <link rel="stylesheet" href="<?= e(asset('assets/css/admin.css')) ?>">
+    <?= theme_head() ?>
 </head>
 <body>
 <div class="app">
@@ -50,13 +50,7 @@ function passenger_header(string $title, string $active = ''): void
         </nav>
 
         <div class="sidebar-foot">
-            <div class="me">
-                <?= avatar($p['name'], $p['profile_photo']) ?>
-                <div class="me-text">
-                    <strong><?= e($p['name']) ?></strong>
-                    <small><?= e($p['email']) ?></small>
-                </div>
-            </div>
+            <?= sidebar_me('passenger', $p['name'], $p['profile_photo'], $p['email'], $active === 'settings') ?>
             <form method="post" action="<?= e(url('passenger/logout.php')) ?>">
                 <?= csrf_field() ?>
                 <button type="submit" class="nav-link logout"><?= icon('logout') ?><span>Log out</span></button>
@@ -69,7 +63,7 @@ function passenger_header(string $title, string $active = ''): void
         <header class="topbar">
             <button class="icon-btn menu-btn" id="menuBtn" aria-label="Open menu" aria-controls="sidebar"><?= icon('menu') ?></button>
             <h1 class="page-title"><?= e($title) ?></h1>
-            <div class="topbar-right"><?= $p['status'] === 'suspended' ? badge('suspended') : '' ?></div>
+            <div class="topbar-right"><?= theme_toggle() ?><?= $p['status'] === 'suspended' ? badge('suspended') : '' ?></div>
         </header>
 
         <main class="content">
@@ -94,7 +88,7 @@ function passenger_footer(): void
         <footer class="footer">&copy; <?= date('Y') ?> <?= e(APP_NAME) ?> E-Hailing</footer>
     </div>
 </div>
-<script src="<?= e(url('assets/js/admin.js')) ?>"></script>
+<script src="<?= e(asset('assets/js/admin.js')) ?>"></script>
 </body>
 </html>
     <?php
