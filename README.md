@@ -10,7 +10,7 @@ An e-hailing website that supposed to resembles like the application 'Grab'.
    C:\xampp\mysql\bin\mysql -u root < database\seed.sql
    ```
 3. Copy `config/config.example.php` to `config/config.php` and adjust the DB settings / `BASE_URL` if needed. (`config.php` is git-ignored.)
-4. Open **http://localhost/ehailing/E-Hailing/** — the homepage has one sign-in form: pick *Passenger*, *Driver* or *Admin*, sign in, and you land in that portal. Logging out (or opening a portal page while signed out) brings you back here with your role preselected (e.g. `index.php?as=driver`). The per-portal pages (`admin/login.php`, `driver/login.php`, `passenger/login.php`) still work too.
+4. Open **http://localhost/ehailing/E-Hailing/** — the homepage has one sign-in form for everyone: enter your email and password and Crab works out whether you are a passenger, driver or admin and takes you to that dashboard. If the same email and password belong to two accounts (e.g. a driver who is also a passenger), you choose which one to open. Logging out (or opening a portal page while signed out) brings you back here. The per-portal pages (`admin/login.php`, `driver/login.php`, `passenger/login.php`) still work too.
 
 **Already imported an older schema?** Run the files in `database/migrations/` that you haven't run yet, in order (`001_…`, `002_…`, `003_in_app_chat.sql`, then `004_booking_payments.sql`) — they add the new columns/tables without touching your existing data. To get the latest demo data (e.g. the Kota Kinabalu rides and drivers), simply re-import `schema.sql` and then `seed.sql` (this resets the database to the demo data).
 

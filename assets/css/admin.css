@@ -671,16 +671,13 @@ button { font: inherit; color: inherit; }
 .home-points li { display: flex; align-items: center; gap: 10px; }
 .home-points .icon { flex-shrink: 0; padding: 3px; border-radius: 50%; background: rgba(255, 255, 255, .2); width: 24px; height: 24px; }
 
-/* Role picker: radio buttons styled as a segmented control (works without JS) */
-.role-switch { border: 0; margin: 0; padding: 4px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; border-radius: 12px; background: var(--line-soft); }
-.role-switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-.role-switch label {
-    display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 6px; border-radius: 9px;
-    font-weight: 600; font-size: 13px; color: var(--muted); cursor: pointer; transition: background .12s, color .12s;
-}
-.role-switch label:hover { color: var(--ink); }
-.role-switch input:checked + label { background: var(--surface); color: var(--brand-ink); box-shadow: var(--shadow); }
-.role-switch input:focus-visible + label { outline: 2px solid var(--brand); outline-offset: 1px; }
+/* "Continue as …" choice when one email has several accounts (index.php) */
+.account-choices { display: flex; flex-direction: column; gap: 10px; }
+.account-choice { display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; cursor: pointer; padding: 14px 16px; border: 2px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink); font: inherit; }
+.account-choice:hover, .account-choice:focus-visible { border-color: var(--brand); background: var(--brand-soft); }
+.account-choice > span:not(.account-icon) { flex: 1; display: flex; flex-direction: column; }
+.account-choice small { font-size: 12.5px; }
+.account-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--brand-soft); color: var(--brand-ink); flex-shrink: 0; }
 
 .signup-links { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; padding-top: 18px; border-top: 1px solid var(--line); }
 .signup-link { display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); color: var(--brand-ink); }

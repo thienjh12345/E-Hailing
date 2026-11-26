@@ -40,6 +40,16 @@ function login_admin(string $email, string $password): bool
         return false;
     }
 
+    return admin_sign_in((int)$row['id']);
+}
+
+/** Start the admin session for an account whose password has already been checked. */
+function admin_sign_in(int $id): bool
+{
+    $s = db()->prepare('SELECT id, name, email FROM admins WHERE id = ?');
+    $s->execute([$id]);
+    $row = $s->fetch();
+    if (!$row) return false;
     session_regenerate_id(true); // prevent session fixation
     $_SESSION['admin'] = ['id' => $row['id'], 'name' => $row['name'], 'email' => $row['email']];
     db()->prepare('UPDATE admins SET last_login_at = NOW() WHERE id = ?')->execute([$row['id']]);

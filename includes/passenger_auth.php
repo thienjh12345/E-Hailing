@@ -42,10 +42,16 @@ function login_passenger(string $email, string $password): bool
     $row = $s->fetch();
     if (!$row || !password_verify($password, $row['password_hash'])) return false;
 
+    return passenger_sign_in((int)$row['id']);
+}
+
+/** Start the passenger session for an account whose password has already been checked. */
+function passenger_sign_in(int $id): bool
+{
     session_regenerate_id(true);
-    $_SESSION['passenger_id'] = (int)$row['id'];
+    $_SESSION['passenger_id'] = $id;
     // updated_at = updated_at stops the login from counting as a "profile update".
-    db()->prepare('UPDATE passengers SET last_login_at = NOW(), updated_at = updated_at WHERE id = ?')->execute([$row['id']]);
+    db()->prepare('UPDATE passengers SET last_login_at = NOW(), updated_at = updated_at WHERE id = ?')->execute([$id]);
     return true;
 }
 

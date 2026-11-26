@@ -52,8 +52,14 @@ function login_driver(string $email, string $password): bool
     if (!$row || !password_verify($password, $row['password_hash'])) {
         return false;
     }
+    return driver_sign_in((int)$row['id']);
+}
+
+/** Start the driver session for an account whose password has already been checked. */
+function driver_sign_in(int $id): bool
+{
     session_regenerate_id(true);
-    $_SESSION['driver_id'] = (int)$row['id'];
+    $_SESSION['driver_id'] = $id;
     return true;
 }
 

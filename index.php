@@ -1,11 +1,17 @@
 <?php
 /**
- * Crab — homepage with a single sign-in form for passengers, drivers and admins.
+ * Crab — homepage with ONE sign-in form for passengers, drivers and admins.
+ *
+ * The user just enters email + password; the system works out the role:
+ *  - the email/password is checked against admins, drivers and passengers;
+ *  - one match  → signed in to that portal and sent to its dashboard;
+ *  - two or more (the same email + password used for e.g. a driver AND a passenger
+ *    account) → a quick "Continue as …" choice, so neither account is hidden;
+ *  - no match   → "Incorrect email or password" (it never says which part was wrong).
  *
  * Each role keeps its own session cookie (crab_passenger / crab_driver / crab_admin).
- * This page runs in a small "crab_site" session (for the CSRF token and login
- * throttling), then on a successful login switches into the chosen role's session
- * and uses that role's own login function, so behaviour matches the portal login pages.
+ * This page runs in a small "crab_site" session (CSRF token, login throttling, pending
+ * choice), then switches into the right role's session to sign the user in.
  */
 
 // Start the site session BEFORE the auth files, so they don't open their own sessions here.
@@ -18,10 +24,11 @@ require __DIR__ . '/includes/passenger_auth.php';
 require __DIR__ . '/includes/ui.php';
 
 const ROLES = [
-    'passenger' => ['label' => 'Passenger', 'session' => 'crab_passenger', 'home' => 'passenger/index.php', 'login' => 'login_passenger'],
-    'driver'    => ['label' => 'Driver',    'session' => 'crab_driver',    'home' => 'driver/index.php',    'login' => 'login_driver'],
-    'admin'     => ['label' => 'Admin',     'session' => 'crab_admin',     'home' => 'admin/index.php',     'login' => 'login_admin'],
+    'admin'     => ['label' => 'Admin',     'table' => 'admins',     'session' => 'crab_admin',     'home' => 'admin/index.php',     'sign_in' => 'admin_sign_in',     'icon' => 'dashboard', 'desc' => 'Crab admin console'],
+    'driver'    => ['label' => 'Driver',    'table' => 'drivers',    'session' => 'crab_driver',    'home' => 'driver/index.php',    'sign_in' => 'driver_sign_in',    'icon' => 'rides',     'desc' => 'Take ride requests and see your earnings'],
+    'passenger' => ['label' => 'Passenger', 'table' => 'passengers', 'session' => 'crab_passenger', 'home' => 'passenger/index.php', 'sign_in' => 'passenger_sign_in', 'icon' => 'user',      'desc' => 'Book rides and manage your trips'],
 ];
+const CHOICE_MINUTES = 5;   // how long the "Continue as …" choice stays valid
 
 /** Close the current session and open the named one (re-using its cookie if the browser has one). */
 function switch_session(string $name): void
@@ -33,36 +40,71 @@ function switch_session(string $name): void
     session_start(['cookie_httponly' => true, 'cookie_samesite' => 'Lax']);
 }
 
-$role = $_POST['role'] ?? $_GET['as'] ?? 'passenger';
-if (!isset(ROLES[$role])) $role = 'passenger';
+/** Every role whose account has this email AND this password: [role => account id]. */
+function matching_accounts(string $email, string $password): array
+{
+    $found = [];
+    foreach (ROLES as $role => $r) {
+        $s = db()->prepare("SELECT id, password_hash FROM {$r['table']} WHERE email = ?");
+        $s->execute([strtolower($email)]);
+        $row = $s->fetch();
+        if ($row && password_verify($password, $row['password_hash'])) $found[$role] = (int)$row['id'];
+    }
+    return $found;
+}
+
+/** Sign in to one role's portal and go to its dashboard. */
+function sign_in_as(string $role, int $id): void
+{
+    unset($_SESSION['login_tries'], $_SESSION['login_choice']);
+    switch_session(ROLES[$role]['session']);
+    ROLES[$role]['sign_in']($id);   // regenerates that portal's session id and stores the user
+    redirect(ROLES[$role]['home']);
+}
+
 $email = '';
 $error = '';
+$choice = null;   // accounts to choose from, when one email belongs to several roles
+
+if (isset($_GET['different'])) {
+    unset($_SESSION['login_choice']);
+    redirect('index.php');
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
-    $email    = trim((string)($_POST['email'] ?? ''));
-    $password = (string)($_POST['password'] ?? '');
 
-    $tries = $_SESSION['login_tries'] ?? ['count' => 0, 'at' => 0];
-    if ($tries['count'] >= 5 && time() - $tries['at'] < 60) {
-        $error = 'Too many attempts. Please wait a minute and try again.';
-    } elseif ($email === '' || $password === '') {
-        $error = 'Please enter your email and password.';
-    } else {
-        // Check the password first (no session change needed for a wrong password).
-        $table = ['passenger' => 'passengers', 'driver' => 'drivers', 'admin' => 'admins'][$role];
-        $s = db()->prepare("SELECT password_hash FROM $table WHERE email = ?");
-        $s->execute([strtolower($email)]);
-        $hash = $s->fetchColumn();
-
-        if ($hash && password_verify($password, $hash)) {
-            unset($_SESSION['login_tries']);
-            switch_session(ROLES[$role]['session']);
-            ROLES[$role]['login']($email, $password); // regenerates the role session id + stores the user
-            redirect(ROLES[$role]['home']);
+    if (($_POST['action'] ?? '') === 'choose') {
+        // Second step: the user picked which account to use
+        $pending = $_SESSION['login_choice'] ?? null;
+        $role = (string)($_POST['role'] ?? '');
+        if ($pending && time() - $pending['at'] <= CHOICE_MINUTES * 60 && isset($pending['accounts'][$role], ROLES[$role])) {
+            sign_in_as($role, $pending['accounts'][$role]);
         }
-        $_SESSION['login_tries'] = ['count' => $tries['count'] + 1, 'at' => time()];
-        $error = 'Incorrect email or password for a ' . strtolower(ROLES[$role]['label']) . ' account.';
+        unset($_SESSION['login_choice']);
+        $error = 'Please sign in again.';   // choice expired, or no valid choice was pending
+    } else {
+        $email    = trim((string)($_POST['email'] ?? ''));
+        $password = (string)($_POST['password'] ?? '');
+
+        $tries = $_SESSION['login_tries'] ?? ['count' => 0, 'at' => 0];
+        if ($tries['count'] >= 5 && time() - $tries['at'] < 60) {
+            $error = 'Too many attempts. Please wait a minute and try again.';
+        } elseif ($email === '' || $password === '') {
+            $error = 'Please enter your email and password.';
+        } else {
+            $accounts = matching_accounts($email, $password);
+            if (count($accounts) === 1) {
+                sign_in_as(array_key_first($accounts), reset($accounts));
+            } elseif (count($accounts) > 1) {
+                unset($_SESSION['login_tries']);
+                $_SESSION['login_choice'] = ['accounts' => $accounts, 'email' => strtolower($email), 'at' => time()];
+                $choice = $_SESSION['login_choice'];
+            } else {
+                $_SESSION['login_tries'] = ['count' => $tries['count'] + 1, 'at' => time()];
+                $error = 'Incorrect email or password.';
+            }
+        }
     }
 }
 ?>
@@ -92,46 +134,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <main class="login-panel">
         <?= theme_toggle('floating') ?>
-        <form class="login-card" method="post" novalidate>
-            <div class="login-brand">
-                <?= crab_logo(36) ?>
-                <span class="brand-name"><?= e(strtolower(APP_NAME)) ?></span>
-            </div>
-            <h1>Sign in</h1>
-            <p class="muted">Choose how you use Crab, then sign in.</p>
+        <?php if ($choice): ?>
+            <form class="login-card" method="post">
+                <div class="login-brand">
+                    <?= crab_logo(36) ?>
+                    <span class="brand-name"><?= e(strtolower(APP_NAME)) ?></span>
+                </div>
+                <h1>Continue as…</h1>
+                <p class="muted"><strong><?= e($choice['email']) ?></strong> has more than one Crab account. Which one would you like to use?</p>
+                <?= csrf_field() ?>
+                <input type="hidden" name="action" value="choose">
+                <div class="account-choices">
+                    <?php foreach (ROLES as $role => $r): if (!isset($choice['accounts'][$role])) continue; ?>
+                        <button class="account-choice" name="role" value="<?= e($role) ?>">
+                            <span class="account-icon"><?= icon($r['icon'], 20) ?></span>
+                            <span><strong><?= e($r['label']) ?></strong><small class="muted"><?= e($r['desc']) ?></small></span>
+                            <?= icon('arrow', 16) ?>
+                        </button>
+                    <?php endforeach; ?>
+                </div>
+                <p class="login-alt"><a class="link" href="<?= e(url('index.php?different=1')) ?>">Sign in with a different email</a></p>
+            </form>
+        <?php else: ?>
+            <form class="login-card" method="post" novalidate>
+                <div class="login-brand">
+                    <?= crab_logo(36) ?>
+                    <span class="brand-name"><?= e(strtolower(APP_NAME)) ?></span>
+                </div>
+                <h1>Sign in</h1>
+                <p class="muted">Passengers, drivers and admins all sign in here — we'll take you to the right place.</p>
 
-            <?= csrf_field() ?>
-            <fieldset class="role-switch">
-                <legend class="sr-only">I am signing in as</legend>
-                <?php foreach (ROLES as $key => $r): ?>
-                    <input type="radio" name="role" id="role_<?= $key ?>" value="<?= $key ?>"<?= $role === $key ? ' checked' : '' ?>>
-                    <label for="role_<?= $key ?>"><?= icon(['passenger' => 'user', 'driver' => 'rides', 'admin' => 'dashboard'][$key], 16) ?> <?= e($r['label']) ?></label>
-                <?php endforeach; ?>
-            </fieldset>
+                <?= csrf_field() ?>
+                <?php if ($error): ?>
+                    <div class="flash flash-error" role="alert"><?= e($error) ?></div>
+                <?php endif; ?>
 
-            <?php if ($error): ?>
-                <div class="flash flash-error" role="alert"><?= e($error) ?></div>
-            <?php endif; ?>
+                <label class="field">
+                    <span>Email</span>
+                    <input type="email" name="email" value="<?= e($email) ?>" autocomplete="username" required autofocus>
+                </label>
+                <label class="field">
+                    <span>Password</span>
+                    <input type="password" name="password" autocomplete="current-password" required>
+                </label>
+                <button type="submit" class="btn btn-primary btn-block">Sign in</button>
 
-            <label class="field">
-                <span>Email</span>
-                <input type="email" name="email" value="<?= e($email) ?>" autocomplete="username" required autofocus>
-            </label>
-            <label class="field">
-                <span>Password</span>
-                <input type="password" name="password" autocomplete="current-password" required>
-            </label>
-            <button type="submit" class="btn btn-primary btn-block">Sign in</button>
-
-            <div class="signup-links">
-                <a class="signup-link" href="<?= e(url('passenger/register.php')) ?>">
-                    <?= icon('user', 18) ?><span><strong>New passenger?</strong><small class="muted">Create an account</small></span>
-                </a>
-                <a class="signup-link" href="<?= e(url('driver/register.php')) ?>">
-                    <?= icon('rides', 18) ?><span><strong>Want to drive?</strong><small class="muted">Become a Crab driver</small></span>
-                </a>
-            </div>
-        </form>
+                <div class="signup-links">
+                    <a class="signup-link" href="<?= e(url('passenger/register.php')) ?>">
+                        <?= icon('user', 18) ?><span><strong>New passenger?</strong><small class="muted">Create an account</small></span>
+                    </a>
+                    <a class="signup-link" href="<?= e(url('driver/register.php')) ?>">
+                        <?= icon('rides', 18) ?><span><strong>Want to drive?</strong><small class="muted">Become a Crab driver</small></span>
+                    </a>
+                </div>
+            </form>
+        <?php endif; ?>
     </main>
 <script src="<?= e(asset('assets/js/admin.js')) ?>"></script>
 </body>
