@@ -60,6 +60,37 @@ const FARES = [
     'bike'    => ['base' => 2.50, 'per_km' => 0.80, 'label' => 'Crab Bike',    'seats' => '1 rider + helmet', 'desc' => 'Beat the traffic'],
 ];
 
+/**
+ * Where Crab operates: a centre point and radius (km) per city.
+ * Points picked on the map must fall inside one of these. The radii cover every
+ * place in LOCATIONS (e.g. KLIA and Putrajaya in the Klang Valley, Menggatal in KK).
+ */
+const SERVICE_AREAS = [
+    'klang_valley'  => ['lat' => 3.1000, 'lng' => 101.6200, 'radius_km' => 45, 'zoom' => 12],
+    'kota_kinabalu' => ['lat' => 5.9800, 'lng' => 116.0900, 'radius_km' => 40, 'zoom' => 13],
+];
+
+/** Straight-line distance in km (same flat-earth estimate as trip_distance_km, without the road factor). */
+function straight_km(float $lat1, float $lng1, float $lat2, float $lng2): float
+{
+    return sqrt((($lat1 - $lat2) * 111) ** 2 + (($lng1 - $lng2) * 111) ** 2);
+}
+
+/** Which service city a map point is in, or null if Crab doesn't operate there. */
+function city_for_point(float $lat, float $lng): ?string
+{
+    foreach (SERVICE_AREAS as $city => $a) {
+        if (straight_km($lat, $lng, $a['lat'], $a['lng']) <= $a['radius_km']) return $city;
+    }
+    return null;
+}
+
+/** Tidy an address typed or looked up on the map: one line, max 255 characters. */
+function clean_address(string $raw): string
+{
+    return mb_substr(trim(preg_replace('/\s+/', ' ', $raw)), 0, 255);
+}
+
 /** [city, lat, lng] for a place name, or null if it isn't on the list. */
 function find_location(string $name): ?array
 {

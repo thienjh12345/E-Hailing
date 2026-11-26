@@ -7,6 +7,7 @@
 require __DIR__ . '/../includes/driver_auth.php';
 require __DIR__ . '/../includes/driver_layout.php';
 require __DIR__ . '/../includes/booking.php';
+require __DIR__ . '/../includes/trip_road.php';
 $d = require_driver();
 booking_expire_stale();
 
@@ -65,6 +66,8 @@ driver_header($trip ? 'Current trip' : 'Ride requests', 'trips');
 
 <?php if ($trip): ?>
     <?php $pickupPhase = $trip['status'] === 'accepted'; ?>
+    <?= trip_road($trip + ['driver_name' => $d['name'], 'plate_no' => $d['plate_no']], 'driver') ?>
+    <script src="<?= e(asset('assets/js/trip-road.js')) ?>" defer></script>
     <section class="grid-main">
         <article class="card trip-live">
             <div class="trip-headline">

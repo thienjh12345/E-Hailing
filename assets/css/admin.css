@@ -976,3 +976,174 @@ a.me:hover .me-gear, a.me.active .me-gear { color: var(--brand-ink); }
     .app, .main, .content { display: block; padding: 0; }
     .receipt { border: 0; box-shadow: none; }
 }
+
+/* =============================================================
+   Driver car photos & PUSPAKOM certificate uploads
+   ============================================================= */
+.form-hint { margin: -4px 0 12px; }
+.doc-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 14px; }
+.doc-slot { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.doc-drop { display: block; cursor: pointer; border-radius: var(--radius-sm); }
+.doc-preview {
+    display: grid; place-items: center; overflow: hidden; aspect-ratio: 4 / 3; width: 100%;
+    border: 2px dashed var(--line); border-radius: var(--radius-sm); background: var(--surface-2); color: var(--muted);
+}
+.doc-wide .doc-preview { aspect-ratio: 16 / 7; }
+.doc-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.doc-preview iframe { width: 100%; height: 100%; border: 0; background: #fff; }
+.doc-drop:hover .doc-preview, .doc-input:focus-visible ~ .doc-actions label { border-color: var(--brand); }
+.doc-input:focus-visible ~ .doc-actions label { outline: 2px solid var(--brand); outline-offset: 2px; }
+.doc-slot.changed .doc-preview { border-style: solid; border-color: var(--ok); }
+.doc-slot.has-error .doc-preview { border-color: var(--bad); }
+.doc-empty, .doc-pdf { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding: 10px; }
+.doc-empty small { font-size: 12px; }
+.doc-pdf { color: var(--brand-ink); }
+.doc-pdf small { color: var(--muted); max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.doc-info { display: flex; flex-direction: column; min-width: 0; }
+.doc-info strong { font-size: 13.5px; }
+.doc-info .req { font-style: normal; font-weight: 600; font-size: 11px; color: var(--brand-ink); margin-left: 4px; }
+.doc-info small { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.doc-input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+.doc-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.doc-actions label { cursor: pointer; }
+
+/* Admin read-only view */
+.doc-grid.view { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 0; }
+.doc-grid.view .doc-wide { grid-column: 1 / -1; }
+.doc-view { margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.doc-view a.doc-preview { border-style: solid; }
+.doc-view a.doc-preview:hover { border-color: var(--brand); }
+.doc-view figcaption { display: flex; flex-direction: column; font-size: 13px; }
+
+@media (max-width: 860px) { .doc-grid.view { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 420px) { .doc-grid { grid-template-columns: minmax(0, 1fr); } }
+/* Wide cards (vehicle page, admin): 4 photos in a row; registration form is narrower: 2 per row */
+.doc-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.login-card .doc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.doc-wide { max-width: 460px; }
+@media (max-width: 860px) { .doc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 420px) { .doc-grid, .login-card .doc-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* Elements marked hidden stay hidden even when a class (e.g. .btn) sets a display value */
+[hidden] { display: none !important; }
+
+/* =============================================================
+   Booking map picker (passenger/book.php) — assets/js/map-picker.js
+   ============================================================= */
+.place-picker { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
+.pp-points { position: relative; display: flex; flex-direction: column; gap: 8px; }
+.pp-point {
+    display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; cursor: pointer;
+    padding: 10px 44px 10px 14px; border: 2px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink);
+}
+.pp-point:hover { border-color: var(--brand-line); }
+.pp-point.active { border-color: var(--brand); background: var(--brand-soft); }
+.pp-point-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.pp-point-text small { font-size: 11.5px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.pp-point-text strong { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pp-point-text strong.muted { font-weight: 500; }
+.pp-edit { color: var(--muted); }
+.pp-swap { position: absolute; right: 8px; top: 50%; transform: translateY(-50%) rotate(90deg); width: 30px; height: 30px; border-radius: 50%; z-index: 2; }
+
+.pp-map-wrap { position: relative; height: 380px; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); isolation: isolate; }
+.pp-map { position: absolute; inset: 0; background: var(--surface-2); }
+.pp-map .leaflet-control-attribution { font-size: 10px; }
+
+/* Centre pin: its tip is the exact centre of the map. While the map moves it lifts up. */
+.pp-pin { position: absolute; left: 50%; top: 50%; z-index: 500; pointer-events: none; width: 32px; height: 44px; transform: translate(-50%, -100%); }
+.pp-pin svg { display: block; transition: transform .18s ease-out; filter: drop-shadow(0 3px 3px rgba(0, 0, 0, .25)); }
+.pp-pin .pin-body { fill: var(--brand); }
+.pp-pin-dropoff .pin-body { fill: #111827; }
+.pp-pin-shadow {
+    position: absolute; left: 50%; bottom: -4px; width: 14px; height: 6px; margin-left: -7px; border-radius: 50%;
+    background: rgba(0, 0, 0, .3); transition: transform .18s ease-out, opacity .18s;
+}
+.pp-pin.lifting svg { transform: translateY(-14px); }
+.pp-pin.lifting .pp-pin-shadow { transform: scale(.6); opacity: .55; }
+@media (prefers-reduced-motion: reduce) { .pp-pin svg, .pp-pin-shadow { transition: none; } }
+
+.pp-marker span { display: block; width: 18px; height: 18px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, .35); }
+.pp-marker-pickup span { background: var(--brand); }
+.pp-marker-dropoff span { background: #111827; }
+
+.pp-search { position: absolute; top: 10px; left: 56px; right: 10px; z-index: 600; display: flex; flex-direction: column; align-items: flex-end; }
+.pp-search-btn { background: var(--surface); color: var(--ink); border-color: var(--line); box-shadow: var(--shadow); }
+.pp-search-btn:hover { border-color: var(--brand); color: var(--brand-ink); }
+.pp-search-box { margin-top: 8px; width: 100%; max-width: 440px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm); box-shadow: 0 10px 30px rgba(0, 0, 0, .18); overflow: hidden; }
+.pp-search-row { display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 12px; border-bottom: 1px solid var(--line-soft); color: var(--muted); }
+.pp-search-row input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; color: var(--ink); font: inherit; padding: 6px 0; }
+.pp-results { list-style: none; margin: 0; padding: 4px 0; max-height: 220px; overflow-y: auto; }
+.pp-results button { display: flex; flex-direction: column; align-items: flex-start; width: 100%; text-align: left; padding: 8px 14px; border: 0; background: none; color: var(--ink); cursor: pointer; }
+.pp-results button:hover:not(:disabled), .pp-results button:focus-visible { background: var(--brand-soft); }
+.pp-results button:disabled { opacity: .55; cursor: not-allowed; }
+.pp-results strong { font-size: 13.5px; }
+.pp-results small { font-size: 12px; color: var(--muted); }
+.pp-msg { padding: 8px 14px; font-size: 12.5px; color: var(--muted); }
+
+.pp-sheet {
+    position: absolute; left: 10px; right: 10px; bottom: 10px; z-index: 600; display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm); box-shadow: 0 6px 20px rgba(0, 0, 0, .15);
+}
+.pp-sheet-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.pp-sheet-text strong { font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pp-sheet-text small { font-size: 12px; }
+.pp-sheet .btn { flex-shrink: 0; }
+
+@media (max-width: 640px) {
+    .pp-map-wrap { height: 340px; }
+    .pp-sheet { flex-direction: column; align-items: stretch; }
+}
+
+/* =============================================================
+   Trip "road" progress (passenger + driver) — assets/js/trip-road.js
+   ============================================================= */
+.trip-road .card-head { margin-bottom: 10px; }
+.road-percent { font-size: 22px; font-weight: 800; color: var(--brand-ink); font-variant-numeric: tabular-nums; }
+.road-map { border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--line); }
+.road-map svg { display: block; width: 100%; height: auto; }
+.map-ground { fill: #EEF1EC; }
+.map-river { fill: #CFE3F3; }
+.map-park { fill: #D6EBCF; }
+.map-blocks rect { fill: #E2E5E0; }
+.map-street { stroke: #FFFFFF; stroke-width: 10; fill: none; }
+.road-base { fill: none; stroke: #4B5563; stroke-width: 30; stroke-linecap: round; stroke-linejoin: round; }
+.road-progress { fill: none; stroke: var(--brand); stroke-width: 30; stroke-linecap: round; stroke-linejoin: round; opacity: .9; }
+.road-center { fill: none; stroke: #F9FAFB; stroke-width: 2.5; stroke-dasharray: 14 12; opacity: .9; }
+.road-stop circle { stroke: #fff; stroke-width: 3; }
+.stop-driver circle { fill: #111827; }
+.stop-driver text { fill: #fff; font-size: 13px; font-weight: 800; font-family: inherit; }
+.stop-pickup circle { fill: var(--brand); }
+.stop-pickup .stop-inner { fill: #fff; stroke: none; }
+.stop-dropoff path { fill: #111827; stroke: #111827; stroke-width: 2; }
+.stop-dropoff circle { fill: #111827; }
+.road-car .car-body { fill: #FFFFFF; stroke: #111827; stroke-width: 2.5; }
+.road-car .car-glass { fill: #93C5FD; }
+.road-car .car-light { fill: #FBBF24; }
+.road-car { filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .35)); }
+.trip-road.arrived .road-percent { color: var(--ok); }
+
+:root[data-theme="dark"] .map-ground { fill: #23272B; }
+:root[data-theme="dark"] .map-river { fill: #1B3245; }
+:root[data-theme="dark"] .map-park { fill: #1F3524; }
+:root[data-theme="dark"] .map-blocks rect { fill: #2C3136; }
+:root[data-theme="dark"] .map-street { stroke: #353B41; }
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .map-ground { fill: #23272B; }
+    :root:not([data-theme="light"]) .map-river { fill: #1B3245; }
+    :root:not([data-theme="light"]) .map-park { fill: #1F3524; }
+    :root:not([data-theme="light"]) .map-blocks rect { fill: #2C3136; }
+    :root:not([data-theme="light"]) .map-street { stroke: #353B41; }
+}
+
+.road-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+.road-steps > div { display: grid; grid-template-columns: 14px 1fr; column-gap: 8px; align-items: center; min-width: 0; }
+.road-steps .dot { grid-row: span 2; width: 12px; height: 12px; border-radius: 50%; }
+.road-steps .dot.driver { background: var(--ink); }
+.road-steps .dot.start { border: 3px solid var(--brand); background: var(--surface); }
+.road-steps .dot.end { background: var(--brand); }
+.road-steps small { font-size: 11.5px; }
+.road-steps strong { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.road-status { margin: 12px 0 0; font-weight: 600; }
+.trip-road.arrived .road-status { color: var(--ok); }
+
+@media (max-width: 640px) { .road-steps { grid-template-columns: minmax(0, 1fr); } }

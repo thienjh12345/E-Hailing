@@ -16,6 +16,7 @@ DROP TABLE IF EXISTS payment_cards;
 DROP TABLE IF EXISTS chat_messages;
 DROP TABLE IF EXISTS chat_conversations;
 DROP TABLE IF EXISTS passenger_saved_places;
+DROP TABLE IF EXISTS driver_documents;
 DROP TABLE IF EXISTS driver_change_requests;
 DROP TABLE IF EXISTS rides;
 DROP TABLE IF EXISTS drivers;
@@ -254,6 +255,24 @@ CREATE TABLE wallet_transactions (
   CONSTRAINT fk_wallet_passenger FOREIGN KEY (passenger_id) REFERENCES passengers(id) ON DELETE CASCADE,
   CONSTRAINT fk_wallet_ride      FOREIGN KEY (ride_id)      REFERENCES rides(id)      ON DELETE SET NULL,
   INDEX idx_wallet_passenger (passenger_id, created_at)
+) ENGINE=InnoDB;
+
+-- -------------------------------------------------------------
+-- Driver documents: 4 car photos + PUSPAKOM inspection certificate
+--   Required when a driver registers; the driver can replace any of
+--   them later from Licence & vehicle. One row per driver per type.
+-- -------------------------------------------------------------
+CREATE TABLE driver_documents (
+  id             INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  driver_id      INT UNSIGNED  NOT NULL,
+  doc_type       ENUM('car_front','car_back','car_left','car_right','puspakom') NOT NULL,
+  file_path      VARCHAR(255)  NOT NULL,          -- relative to project root, e.g. uploads/vehicles/ab12.jpg
+  original_name  VARCHAR(255)  NOT NULL,
+  mime_type      VARCHAR(50)   NOT NULL,
+  file_size      INT UNSIGNED  NOT NULL,
+  uploaded_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_doc_driver FOREIGN KEY (driver_id) REFERENCES drivers(id) ON DELETE CASCADE,
+  UNIQUE KEY uq_driver_doc (driver_id, doc_type)
 ) ENGINE=InnoDB;
 
 -- -------------------------------------------------------------

@@ -5,6 +5,7 @@
  */
 require __DIR__ . '/../includes/driver_auth.php';
 require __DIR__ . '/../includes/ui.php';
+require __DIR__ . '/../includes/driver_documents.php';
 
 if (current_driver()) {
     redirect('driver/index.php');
@@ -23,6 +24,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $pwError = validate_new_password((string)($_POST['password'] ?? ''), (string)($_POST['password_confirm'] ?? ''));
     if ($pwError) $errors['password'] = $pwError;
     if (empty($_POST['agree'])) $errors['agree'] = 'Please confirm your details are true.';
+    // Car photos + PUSPAKOM certificate (kept between attempts if another field has an error)
+    [$heldDocs, $docErrors] = registration_docs_process();
+    $errors += $docErrors;
 
     if (!$errors) {
         $cols = array_keys($clean);
@@ -30,6 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             . implode(', ', array_fill(0, count($cols), '?')) . ', ?, \'pending\')';
         try {
             db()->prepare($sql)->execute([...array_values($clean), password_hash($_POST['password'], PASSWORD_DEFAULT)]);
+            registration_docs_save((int)db()->lastInsertId(), $heldDocs);
             login_driver($clean['email'], $_POST['password']);
             flash('success', 'Welcome to Crab, ' . $clean['name'] . '! Your application has been sent for review.');
             redirect('driver/index.php');
@@ -41,6 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 $minYear = (int)date('Y') - MAX_VEHICLE_AGE;
+$heldDocs = $_SESSION['reg_docs'] ?? [];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -66,7 +72,8 @@ $minYear = (int)date('Y') - MAX_VEHICLE_AGE;
 
     <main class="login-panel">
         <?= theme_toggle('floating') ?>
-        <form class="login-card wide" method="post" novalidate>
+        <form class="login-card wide" method="post" enctype="multipart/form-data" novalidate data-doc-required-form>
+            <input type="hidden" name="MAX_FILE_SIZE" value="<?= DRIVER_DOC_MAX_BYTES ?>">
             <a class="back-home" href="<?= e(url('index.php?as=driver')) ?>">&larr; Back to home</a>
             <div class="login-brand">
                 <?= crab_logo(36) ?>
@@ -111,6 +118,20 @@ $minYear = (int)date('Y') - MAX_VEHICLE_AGE;
             </fieldset>
 
             <fieldset class="form-section">
+                <legend>Car photos</legend>
+                <p class="small muted form-hint">Take a clear photo of each side of the car you'll drive, in daylight, with the number plate readable on the front and back. JPG, PNG or WebP, up to 5 MB each.</p>
+                <div class="doc-grid">
+                    <?php foreach (CAR_PHOTO_TYPES as $t): ?><?= doc_slot($t, $heldDocs[$t] ?? null, 'register', $errors['doc_' . $t] ?? null) ?><?php endforeach; ?>
+                </div>
+            </fieldset>
+
+            <fieldset class="form-section">
+                <legend>PUSPAKOM inspection</legend>
+                <p class="small muted form-hint">Upload your valid PUSPAKOM inspection certificate for this car — a clear photo or the PDF, up to 5 MB.</p>
+                <?= doc_slot('puspakom', $heldDocs['puspakom'] ?? null, 'register', $errors['doc_puspakom'] ?? null) ?>
+            </fieldset>
+
+            <fieldset class="form-section">
                 <legend>Password</legend>
                 <div class="form-grid">
                     <?= form_field('password', 'Password', '', $errors, ['type' => 'password', 'required' => true, 'autocomplete' => 'new-password', 'help' => 'At least 8 characters, letters and numbers']) ?>
@@ -128,5 +149,6 @@ $minYear = (int)date('Y') - MAX_VEHICLE_AGE;
         </form>
     </main>
 <script src="<?= e(asset('assets/js/admin.js')) ?>"></script>
+<script src="<?= e(asset('assets/js/documents.js')) ?>"></script>
 </body>
 </html>

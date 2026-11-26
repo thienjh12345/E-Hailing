@@ -66,7 +66,7 @@ passenger_header('Receipt', 'rides');
     <footer class="receipt-actions">
         <button type="button" class="btn btn-outline btn-sm" onclick="window.print()">Print / save as PDF</button>
         <a class="btn btn-ghost btn-sm" href="<?= e(url('passenger/messages.php?support=1&about=' . $r['id'])) ?>">Report a problem</a>
-        <a class="btn btn-ghost btn-sm" href="<?= e(url('passenger/book.php?pickup=' . rawurlencode($r['pickup_address']) . '&dropoff=' . rawurlencode($r['dropoff_address']))) ?>">Book this trip again</a>
+        <a class="btn btn-ghost btn-sm" href="<?= e(url('passenger/book.php?' . http_build_query(['pickup' => $r['pickup_address'], 'plat' => $r['pickup_lat'], 'plng' => $r['pickup_lng'], 'dropoff' => $r['dropoff_address'], 'dlat' => $r['dropoff_lat'], 'dlng' => $r['dropoff_lng']]))) ?>">Book this trip again</a>
     </footer>
 </article>
 

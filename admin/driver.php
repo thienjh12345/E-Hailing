@@ -6,6 +6,7 @@
 require __DIR__ . '/../includes/admin_auth.php';
 require __DIR__ . '/../includes/admin_layout.php';
 require __DIR__ . '/../includes/driver_profile.php';
+require __DIR__ . '/../includes/driver_documents.php';
 $admin = require_admin();
 
 $id = (int)($_GET['id'] ?? 0);
@@ -169,6 +170,24 @@ admin_header($d['name'], 'drivers');
                 <div><dt>Plate</dt><dd><span class="plate"><?= e($d['plate_no']) ?></span></dd></div>
                 <div><dt>Colour / year</dt><dd><?= e($d['vehicle_color'] ?: '—') ?> · <?= e($d['vehicle_year'] ?: '—') ?></dd></div>
             </dl>
+        </article>
+
+        <?php $docs = driver_documents((int)$d['id']); ?>
+        <article class="card">
+            <header class="card-head"><div><h2>Car photos &amp; PUSPAKOM</h2><p class="muted">Uploaded by the driver · click to open full size</p></div></header>
+            <div class="doc-grid view">
+                <?php foreach (DRIVER_DOC_TYPES as $t => [$label]): $doc = $docs[$t] ?? null; ?>
+                    <figure class="doc-view<?= $t === 'puspakom' ? ' doc-wide' : '' ?>">
+                        <?php if ($doc): ?>
+                            <a class="doc-preview" href="<?= e(url($doc['file_path'])) ?>" target="_blank" rel="noopener"><?= doc_preview_html($doc['file_path'], $doc['mime_type'], $doc['original_name']) ?></a>
+                            <figcaption><strong><?= e($label) ?></strong><small class="muted">Uploaded <?= e(time_ago($doc['uploaded_at'])) ?></small></figcaption>
+                        <?php else: ?>
+                            <span class="doc-preview"><span class="doc-empty"><?= icon('alert', 22) ?><small>Not uploaded</small></span></span>
+                            <figcaption><strong><?= e($label) ?></strong><small class="field-error">Missing</small></figcaption>
+                        <?php endif; ?>
+                    </figure>
+                <?php endforeach; ?>
+            </div>
         </article>
 
         <article class="card">

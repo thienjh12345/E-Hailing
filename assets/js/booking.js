@@ -11,14 +11,20 @@
         var locations = JSON.parse(form.getAttribute('data-locations'));
         var fares = JSON.parse(form.getAttribute('data-fares'));
         var balance = parseFloat(form.getAttribute('data-balance')) || 0;
-        var pickup = form.querySelector('[data-place="pickup"]');
-        var dropoff = form.querySelector('[data-place="dropoff"]');
 
         function findPlace(name) {
             for (var city in locations) {
                 if (locations[city][name]) return { city: city, lat: locations[city][name][0], lng: locations[city][name][1] };
             }
             return null;
+        }
+        // A trip point: from the map picker's hidden fields, or (fallback) the place list
+        function point(field) {
+            var lat = form.querySelector('[data-pp-value="' + field + '-lat"]');
+            var lng = form.querySelector('[data-pp-value="' + field + '-lng"]');
+            if (lat && lat.value !== '' && lng.value !== '') return { lat: parseFloat(lat.value), lng: parseFloat(lng.value) };
+            var select = form.querySelector('[data-place="' + field + '"]');
+            return select ? findPlace(select.value) : null;
         }
         // Same estimate as trip_distance_km() in includes/locations.php
         function distanceKm(a, b) {
@@ -35,8 +41,10 @@
         }
         function setSum(key, text) { form.querySelector('[data-sum="' + key + '"]').textContent = text; }
 
-        // Only allow destinations in the pick-up's city
+        // Fallback list only: allow destinations in the pick-up's city
         function limitDropoffCity() {
+            var pickup = form.querySelector('[data-place="pickup"]'), dropoff = form.querySelector('[data-place="dropoff"]');
+            if (!pickup || !dropoff) return;
             var from = findPlace(pickup.value);
             dropoff.querySelectorAll('optgroup').forEach(function (g) {
                 g.disabled = !!from && g.getAttribute('data-city') !== from.city;
@@ -48,15 +56,15 @@
 
         function update() {
             limitDropoffCity();
-            var a = findPlace(pickup.value), b = findPlace(dropoff.value);
+            var a = point('pickup'), b = point('dropoff');
             var meta = form.querySelector('[data-trip-meta]');
             var warn = form.querySelector('[data-wallet-warning]');
-            if (!a || !b || pickup.value === dropoff.value) {
+            if (!a || !b) {
                 Object.keys(fares).forEach(function (t) {
                     form.querySelector('[data-price="' + t + '"]').textContent = 'from ' + money(fares[t].base);
                 });
                 ['distance', 'time', 'base', 'per_km', 'total'].forEach(function (k) { setSum(k, '—'); });
-                meta.textContent = 'Choose pick-up and destination to see prices';
+                meta.textContent = 'Set your pick-up and destination to see prices';
                 if (warn) warn.hidden = true;
                 return;
             }
@@ -75,23 +83,19 @@
         }
 
         form.addEventListener('change', update);
-        var swap = form.querySelector('[data-swap]');
-        if (swap) swap.addEventListener('click', function () {
-            var t = pickup.value;
-            pickup.value = dropoff.value;
-            limitDropoffCity();
-            dropoff.value = t;
-            update();
-        });
         // Choosing a card in the dropdown also selects "Card"
         var cardSelect = form.querySelector('select[name="card_id"]');
         if (cardSelect) cardSelect.addEventListener('change', function () {
             form.querySelector('input[name="payment_method"][value="card"]').checked = true;
         });
-        // Prevent double booking from a double click
-        form.addEventListener('submit', function () {
+        // Prevent double booking from a double click (but not when the submit was stopped, e.g. a missing pin)
+        form.addEventListener('submit', function (e) {
             var btn = form.querySelector('.book-btn');
-            setTimeout(function () { btn.disabled = true; btn.lastChild.textContent = ' Booking…'; }, 0);
+            setTimeout(function () {
+                if (e.defaultPrevented) return;
+                btn.disabled = true;
+                btn.lastChild.textContent = ' Booking…';
+            }, 0);
         });
         update();
     }

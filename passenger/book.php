@@ -9,6 +9,7 @@
 require __DIR__ . '/../includes/passenger_auth.php';
 require __DIR__ . '/../includes/passenger_layout.php';
 require __DIR__ . '/../includes/booking.php';
+require __DIR__ . '/../includes/trip_road.php';
 $p = require_passenger();
 $pid = (int)$p['id'];
 
@@ -24,8 +25,10 @@ if (isset($_GET['poll'])) {
 
 $errors = [];
 $v = [
-    'pickup'         => (string)($_GET['pickup'] ?? ''),
-    'dropoff'        => (string)($_GET['dropoff'] ?? ''),
+    'pickup'         => '',
+    'dropoff'        => '',
+    'pickup_lat' => '', 'pickup_lng' => '', 'pickup_address' => '',
+    'dropoff_lat' => '', 'dropoff_lng' => '', 'dropoff_address' => '',
     'pickup_note'    => '',
     'service_type'   => 'car',
     'payment_method' => $p['preferred_payment'],
@@ -52,6 +55,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('passenger/book.php');
     }
 }
+
+// "Book again" links: ?pickup=Name&plat=..&plng=..&dropoff=Name&dlat=..&dlng=.. (coordinates optional for list places)
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    foreach (['pickup' => 'p', 'dropoff' => 'd'] as $field => $k) {
+        $name = clean_address((string)($_GET[$field] ?? ''));
+        $lat = $_GET[$k . 'lat'] ?? null; $lng = $_GET[$k . 'lng'] ?? null;
+        if (is_numeric($lat) && is_numeric($lng) && city_for_point((float)$lat, (float)$lng)) {
+            $v[$field . '_lat'] = (string)(float)$lat; $v[$field . '_lng'] = (string)(float)$lng; $v[$field . '_address'] = $name;
+        } elseif ($place = find_location($name)) {
+            $v[$field . '_lat'] = (string)$place[1]; $v[$field . '_lng'] = (string)$place[2]; $v[$field . '_address'] = $name;
+        }
+    }
+}
+// Open the map on the passenger's usual city
+$s = db()->prepare('SELECT city FROM rides WHERE passenger_id = ? ORDER BY id DESC LIMIT 1');
+$s->execute([$pid]);
+$defaultCity = $s->fetchColumn() ?: 'klang_valley';
 
 $cards = passenger_cards($pid);
 $usableCards = array_values(array_filter($cards, fn($c) => !card_expired($c)));
@@ -90,6 +110,7 @@ passenger_header($live ? 'Your trip' : 'Book a ride', 'book');
         'ongoing'   => 'Heading to ' . $live['dropoff_address'] . ' — about ' . trip_minutes((float)$live['distance_km']) . ' min.',
     ][$live['status']];
     ?>
+    <?php if ($live['driver_id']): ?><?= trip_road($live, 'passenger') ?><?php endif; ?>
     <section class="grid-main" data-live-trip data-poll="<?= e(url('passenger/book.php?poll=1')) ?>" data-status="<?= e($live['status']) ?>" data-driver="<?= (int)$live['driver_id'] ?>">
         <article class="card trip-live">
             <ol class="stepper" aria-label="Trip progress">
@@ -171,7 +192,51 @@ passenger_header($live ? 'Your trip' : 'Book a ride', 'book');
         <div class="stack">
             <article class="card">
                 <header class="card-head"><div><h2>Where to?</h2><p class="muted">Crab is available in the Klang Valley and Kota Kinabalu</p></div></header>
-                <div class="where">
+                <div class="place-picker" data-place-picker
+                     data-areas="<?= e(json_encode(SERVICE_AREAS)) ?>" data-places="<?= e(json_encode(LOCATIONS)) ?>"
+                     data-cities="<?= e(json_encode(CITIES)) ?>" data-default-city="<?= e($defaultCity) ?>">
+                    <?php foreach (['pickup', 'dropoff'] as $field): foreach (['lat', 'lng', 'address'] as $part): ?>
+                        <input type="hidden" name="<?= $field . '_' . $part ?>" value="<?= e($v[$field . '_' . $part]) ?>" data-pp-value="<?= $field . '-' . $part ?>">
+                    <?php endforeach; endforeach; ?>
+
+                    <div class="pp-points">
+                        <?php foreach (['pickup' => 'Pick-up', 'dropoff' => 'Destination'] as $field => $label): $addr = $v[$field . '_address']; ?>
+                            <button type="button" class="pp-point" data-pp-tab="<?= $field ?>" aria-pressed="false">
+                                <span class="dot <?= $field === 'pickup' ? 'start' : 'end' ?> inline"></span>
+                                <span class="pp-point-text"><small><?= e($label) ?></small>
+                                    <strong data-pp-label="<?= $field ?>" class="<?= $addr === '' ? 'muted' : '' ?>"><?= e($addr !== '' ? $addr : 'Choose on the map') ?></strong></span>
+                                <span class="pp-edit"><?= icon('edit', 14) ?></span>
+                            </button>
+                            <small class="field-error" data-pp-error="<?= $field ?>"<?= isset($errors[$field]) ? '' : ' hidden' ?>><?= e($errors[$field] ?? '') ?></small>
+                        <?php endforeach; ?>
+                        <button type="button" class="icon-btn pp-swap" data-pp-swap title="Swap pick-up and destination" aria-label="Swap pick-up and destination"><?= icon('arrow', 16) ?></button>
+                    </div>
+
+                    <div class="pp-map-wrap" data-pp-mapwrap hidden>
+                        <div class="pp-map" data-pp-map aria-label="Map — drag to move the pin"></div>
+                        <div class="pp-pin pp-pin-pickup" data-pp-pin aria-hidden="true">
+                            <svg viewBox="0 0 32 44" width="32" height="44"><path class="pin-body" d="M16 0C7.2 0 0 7 0 15.7 0 27.5 16 44 16 44s16-16.5 16-28.3C32 7 24.8 0 16 0z"/><circle cx="16" cy="15.5" r="6" fill="#fff"/></svg>
+                            <span class="pp-pin-shadow"></span>
+                        </div>
+                        <div class="pp-search">
+                            <button type="button" class="btn btn-sm pp-search-btn" data-pp-search-open><?= icon('search', 16) ?> Search</button>
+                            <div class="pp-search-box" data-pp-search-box hidden>
+                                <div class="pp-search-row">
+                                    <?= icon('search', 16) ?>
+                                    <input type="search" data-pp-search-input placeholder="Search a place or address" aria-label="Search a place or address" autocomplete="off">
+                                    <button type="button" class="btn btn-sm btn-primary" data-pp-search-go>Search</button>
+                                    <button type="button" class="icon-btn" data-pp-search-close aria-label="Close search"><?= icon('x', 16) ?></button>
+                                </div>
+                                <ul class="pp-results" data-pp-results></ul>
+                            </div>
+                        </div>
+                        <div class="pp-sheet">
+                            <div class="pp-sheet-text"><strong data-pp-address>Drag the map to place the pin</strong><small class="muted" data-pp-note></small></div>
+                            <button type="button" class="btn btn-primary btn-sm" data-pp-confirm disabled>Set pick-up here</button>
+                        </div>
+                    </div>
+                <div class="where pp-fallback" data-pp-fallback>
+                    <p class="small muted">The map couldn’t load, so choose from Crab’s popular places instead.</p>
                     <?php foreach (['pickup' => 'Pick-up point', 'dropoff' => 'Destination'] as $field => $label): ?>
                         <label class="field<?= isset($errors[$field]) ? ' has-error' : '' ?>">
                             <span><span class="dot <?= $field === 'pickup' ? 'start' : 'end' ?> inline"></span> <?= e($label) ?></span>
@@ -188,7 +253,7 @@ passenger_header($live ? 'Your trip' : 'Book a ride', 'book');
                             <?php if (isset($errors[$field])): ?><small class="field-error"><?= e($errors[$field]) ?></small><?php endif; ?>
                         </label>
                     <?php endforeach; ?>
-                    <button type="button" class="icon-btn swap" data-swap title="Swap pick-up and destination" aria-label="Swap pick-up and destination"><?= icon('arrow', 16) ?></button>
+                </div>
                 </div>
                 <?= form_field('pickup_note', 'Note for your driver', $v['pickup_note'], $errors, ['placeholder' => 'e.g. Main entrance, I\'m wearing a red shirt', 'attrs' => 'maxlength="' . PICKUP_NOTE_MAX . '"']) ?>
             </article>
@@ -254,6 +319,13 @@ passenger_header($live ? 'Your trip' : 'Book a ride', 'book');
             </article>
         </div>
     </form>
+<?php endif; ?>
+<?php if (!$live): ?>
+    <link rel="stylesheet" href="<?= e(asset('assets/vendor/leaflet/leaflet.css')) ?>">
+    <script src="<?= e(asset('assets/vendor/leaflet/leaflet.js')) ?>" defer></script>
+    <script src="<?= e(asset('assets/js/map-picker.js')) ?>" defer></script>
+<?php elseif ($live['driver_id']): ?>
+    <script src="<?= e(asset('assets/js/trip-road.js')) ?>" defer></script>
 <?php endif; ?>
 <script src="<?= e(asset('assets/js/booking.js')) ?>" defer></script>
 

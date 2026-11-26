@@ -55,18 +55,16 @@ function booking_create(array $passenger, array $in): array
     if ($passenger['status'] !== 'active') return [null, ['form' => 'Your account is suspended, so you can\'t book rides right now. Please contact Crab Support.']];
     if (passenger_live_ride($pid)) return [null, ['form' => 'You already have a trip in progress. Finish or cancel it before booking another.']];
 
-    $pickup  = (string)($in['pickup'] ?? '');
-    $dropoff = (string)($in['dropoff'] ?? '');
     $type    = (string)($in['service_type'] ?? '');
     $method  = (string)($in['payment_method'] ?? '');
     $note    = preg_replace('/\s+/', ' ', trim((string)($in['pickup_note'] ?? '')));
 
-    $from = find_location($pickup);
-    $to   = find_location($dropoff);
-    if (!$from) $errors['pickup'] = 'Choose a pick-up point from the list.';
-    if (!$to)   $errors['dropoff'] = 'Choose a destination from the list.';
+    // Pick-up / destination: a point chosen on the map, or a place from the list (fallback when the map can't load)
+    [$pickup, $from, $errors['pickup']] = booking_point($in, 'pickup');
+    [$dropoff, $to, $errors['dropoff']] = booking_point($in, 'dropoff');
+    $errors = array_filter($errors);
     if ($from && $to && $from[0] !== $to[0]) $errors['dropoff'] = 'Pick-up and destination must be in the same city.';
-    if ($from && $to && $pickup === $dropoff) $errors['dropoff'] = 'Choose a destination different from your pick-up point.';
+    elseif ($from && $to && straight_km($from[1], $from[2], $to[1], $to[2]) < 0.2) $errors['dropoff'] = 'Your destination is too close to the pick-up point. Move the pin further away.';
     if (!isset(FARES[$type])) $errors['service_type'] = 'Choose a ride type.';
     if (mb_strlen($note) > PICKUP_NOTE_MAX) $errors['pickup_note'] = 'Keep the note under ' . PICKUP_NOTE_MAX . ' characters.';
     if (!isset(PAYMENT_LABELS[$method])) $errors['payment_method'] = 'Choose how you\'ll pay.';
@@ -102,6 +100,36 @@ function booking_create(array $passenger, array $in): array
         $pdo->rollBack();
         throw $e;
     }
+}
+
+/**
+ * Read one trip point from the booking form.
+ *  Map:      {field}_lat, {field}_lng, {field}_address  (from the map picker)
+ *  Fallback: {field} = a place name from LOCATIONS       (when the map can't load)
+ * The city is always worked out on the server from the coordinates.
+ *
+ * @return array{0: string, 1: ?array, 2: ?string} [address, [city, lat, lng] or null, error or null]
+ */
+function booking_point(array $in, string $field): array
+{
+    $what = $field === 'pickup' ? 'pick-up point' : 'destination';
+    $lat = $in[$field . '_lat'] ?? '';
+    $lng = $in[$field . '_lng'] ?? '';
+    if ($lat !== '' || $lng !== '') {
+        if (!is_numeric($lat) || !is_numeric($lng) || abs((float)$lat) > 90 || abs((float)$lng) > 180) {
+            return ['', null, "Choose your $what on the map."];
+        }
+        $lat = round((float)$lat, 7);
+        $lng = round((float)$lng, 7);
+        $city = city_for_point($lat, $lng);
+        if (!$city) return ['', null, 'Crab isn\'t available there yet — we operate in the Klang Valley and Kota Kinabalu.'];
+        $address = clean_address((string)($in[$field . '_address'] ?? ''));
+        if ($address === '') $address = 'Pinned location (' . number_format($lat, 5) . ', ' . number_format($lng, 5) . ')';
+        return [$address, [$city, $lat, $lng], null];
+    }
+    $name = (string)($in[$field] ?? '');
+    $place = find_location($name);
+    return $place ? [$name, $place, null] : ['', null, "Choose your $what on the map."];
 }
 
 /** Passenger cancels before pick-up (requested or accepted). */
