@@ -43,6 +43,7 @@ admin_header($p['name'], 'passengers');
     <div class="profile-actions">
         <a class="btn btn-sm btn-outline" href="<?= e(url('admin/passenger_edit.php?id=' . $p['id'])) ?>"><?= icon('edit', 16) ?> Edit profile</a>
         <a class="btn btn-sm btn-ghost" href="<?= e(url('admin/rides.php?passenger=' . $p['id'])) ?>">All rides</a>
+        <a class="btn btn-sm btn-ghost" href="<?= e(url('admin/support.php?passenger=' . $p['id'])) ?>"><?= icon('chat', 15) ?> Support chat</a>
         <form method="post" action="<?= e(url('admin/passengers.php')) ?>" class="status-form">
             <?= csrf_field() ?>
             <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">

@@ -118,4 +118,22 @@ admin_header('Ride #' . $ride['id'], 'rides');
     </div>
 </section>
 
+<?php
+$chat = db()->prepare("SELECT m.sender_role, m.body, m.created_at FROM chat_messages m JOIN chat_conversations c ON c.id = m.conversation_id WHERE c.ride_id = ? ORDER BY m.id");
+$chat->execute([$ride['id']]);
+$chatMsgs = $chat->fetchAll();
+?>
+<article class="card">
+    <header class="card-head"><div><h2>Passenger ↔ driver chat</h2><p class="muted">Read-only record of in-app messages for this trip</p></div></header>
+    <?php if ($chatMsgs): ?>
+        <div class="transcript">
+            <?php foreach ($chatMsgs as $m): ?>
+                <div class="transcript-row role-<?= e($m['sender_role']) ?>"><span class="transcript-who"><?= e($m['sender_role'] === 'driver' ? $ride['d_name'] : $ride['p_name']) ?></span><span class="transcript-body"><?= nl2br(e($m['body'])) ?></span><small class="muted"><?= e(fmt_datetime($m['created_at'], 'j M, g:i A')) ?></small></div>
+            <?php endforeach; ?>
+        </div>
+    <?php else: ?>
+        <p class="empty">No messages were exchanged on this trip.</p>
+    <?php endif; ?>
+</article>
+
 <?php admin_footer(); ?>

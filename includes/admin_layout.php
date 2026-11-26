@@ -16,12 +16,15 @@ function admin_header(string $title, string $active = ''): void
 
     // Sidebar badge: driver applications + profile change requests waiting for an admin.
     $pending = (int)db()->query("SELECT (SELECT COUNT(*) FROM drivers WHERE status = 'pending') + (SELECT COUNT(*) FROM driver_change_requests WHERE status = 'pending')")->fetchColumn();
+    require_once __DIR__ . '/chat.php';
+    $unreadChat = chat_unread_total(['role' => 'admin', 'id' => (int)$admin['id']]);
 
     $nav = [
         'dashboard'  => ['Dashboard',  'admin/index.php',      'dashboard'],
         'rides'      => ['Rides',      'admin/rides.php',      'rides'],
         'drivers'    => ['Drivers',    'admin/drivers.php',    'driver'],
         'passengers' => ['Passengers', 'admin/passengers.php', 'users'],
+        'support'    => ['Support',    'admin/support.php',    'chat'],
         'settings'   => ['Settings',   'admin/profile.php',    'settings'],
     ];
     ?>
@@ -48,6 +51,9 @@ function admin_header(string $title, string $active = ''): void
                 <a href="<?= e(url($href)) ?>" class="nav-link<?= $key === $active ? ' active' : '' ?>"<?= $key === $active ? ' aria-current="page"' : '' ?>>
                     <?= icon($ic) ?>
                     <span><?= e($label) ?></span>
+                    <?php if ($key === 'support' && $unreadChat > 0): ?>
+                        <span class="nav-count" title="Unread customer messages"><?= $unreadChat ?></span>
+                    <?php endif; ?>
                     <?php if ($key === 'drivers' && $pending > 0): ?>
                         <span class="nav-count" title="Driver applications and profile changes awaiting review"><?= $pending ?></span>
                     <?php endif; ?>

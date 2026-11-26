@@ -13,9 +13,12 @@ function passenger_header(string $title, string $active = ''): void
 {
     $p = current_passenger();
     $unrated = (int)passenger_stats((int)$p['id'])['unrated'];
+    require_once __DIR__ . '/chat.php';
+    $unreadChat = chat_unread_total(['role' => 'passenger', 'id' => (int)$p['id']]);
     $nav = [
         'home'     => ['Home',         'passenger/index.php',    'home'],
         'rides'    => ['My rides',     'passenger/rides.php',    'rides'],
+        'messages' => ['Messages',     'passenger/messages.php', 'chat'],
         'places'   => ['Saved places', 'passenger/places.php',   'pin'],
         'settings' => ['Settings',     'passenger/profile.php',  'settings'],
     ];
@@ -42,6 +45,9 @@ function passenger_header(string $title, string $active = ''): void
                 <a href="<?= e(url($href)) ?>" class="nav-link<?= $key === $active ? ' active' : '' ?>"<?= $key === $active ? ' aria-current="page"' : '' ?>>
                     <?= icon($ic) ?>
                     <span><?= e($label) ?></span>
+                    <?php if ($key === 'messages' && $unreadChat > 0): ?>
+                        <span class="nav-count" title="Unread messages"><?= $unreadChat ?></span>
+                    <?php endif; ?>
                     <?php if ($key === 'rides' && $unrated > 0): ?>
                         <span class="nav-count soft" title="Trips waiting for your rating"><?= $unrated ?></span>
                     <?php endif; ?>

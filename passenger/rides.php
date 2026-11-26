@@ -65,7 +65,9 @@ passenger_header('My rides', 'rides');
             </ol>
             <footer class="ride-card-foot">
                 <?= driver_chip($r) ?>
-                <div>
+                <div class="ride-card-actions">
+                    <?php if ($r['driver_name']): ?><a class="btn btn-sm btn-ghost" href="<?= e(url('passenger/messages.php?ride=' . $r['id'])) ?>"><?= icon('chat', 15) ?> Message driver</a><?php endif; ?>
+                    <a class="btn btn-sm btn-ghost" href="<?= e(url('passenger/messages.php?support=1&about=' . $r['id'])) ?>">Get help</a>
                     <?php if ($r['status'] === 'completed' && $r['driver_name']): ?>
                         <?php if ($r['rating']): ?>
                             <small class="muted">You rated</small> <?= stars((int)$r['rating']) ?>

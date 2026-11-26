@@ -45,7 +45,10 @@ passenger_header('Home', 'home');
             <div><h2><?= e($liveLabels[$r['status']] ?? 'Current trip') ?></h2><p class="muted"><?= e($r['pickup_address']) ?> → <?= e($r['dropoff_address']) ?></p></div>
             <?= badge($r['status']) ?>
         </header>
-        <?= driver_chip($r) ?>
+        <div class="live-foot">
+            <?= driver_chip($r) ?>
+            <?php if ($r['driver_name']): ?><a class="btn btn-primary btn-sm" href="<?= e(url('passenger/messages.php?ride=' . $r['id'])) ?>"><?= icon('chat', 15) ?> Message driver</a><?php endif; ?>
+        </div>
     </article>
 <?php endif; ?>
 

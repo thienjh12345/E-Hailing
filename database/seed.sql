@@ -294,3 +294,88 @@ UPDATE drivers SET rating = (SELECT ROUND(AVG(r.rating), 2) FROM rides r WHERE r
 -- Demo data loading above should not count as "profile updated"
 UPDATE drivers    SET updated_at = NULL;
 UPDATE passengers SET updated_at = NULL;
+
+-- -------------------------------------------------------------
+-- In-app chat demo conversations
+-- (looked up by email so they attach to the right people/trips)
+-- -------------------------------------------------------------
+SET @admin = (SELECT id FROM admins ORDER BY id LIMIT 1);
+
+-- 1. Chloe and her driver during her current trip (last driver message still unread by Chloe)
+SET @ride1 = (SELECT r.id FROM rides r JOIN passengers p ON p.id = r.passenger_id
+              WHERE p.email = 'chloe.lim@mail.com' AND r.status IN ('accepted','ongoing') AND r.driver_id IS NOT NULL
+              ORDER BY r.id DESC LIMIT 1);
+INSERT INTO chat_conversations (type, passenger_id, driver_id, ride_id, created_at, last_message_at)
+SELECT 'ride', passenger_id, driver_id, id, NOW() - INTERVAL 12 MINUTE, NOW() - INTERVAL 4 MINUTE FROM rides WHERE id = @ride1;
+SET @c1 = (SELECT id FROM chat_conversations WHERE ride_id = @ride1);
+INSERT INTO chat_messages (conversation_id, sender_role, sender_id, body, created_at)
+SELECT c.id, x.role, IF(x.role = 'driver', c.driver_id, c.passenger_id), x.body, NOW() - INTERVAL x.mins MINUTE
+FROM chat_conversations c
+JOIN (SELECT 'driver' AS role, 'Hi Chloe! I''m on my way, about 5 minutes. Look out for a red Perodua Bezza.' AS body, 12 AS mins
+      UNION ALL SELECT 'passenger', 'Great, thank you! I''m waiting at the main entrance.', 11
+      UNION ALL SELECT 'driver', 'Noted. Traffic is a bit slow at the junction, sorry!', 8
+      UNION ALL SELECT 'passenger', 'No worries, take your time.', 7
+      UNION ALL SELECT 'driver', 'I''m here now, hazard lights on near the taxi bay.', 4) x
+WHERE c.id = @c1 ORDER BY x.mins DESC;
+UPDATE chat_conversations c
+SET c.driver_last_read    = (SELECT MAX(id) FROM chat_messages WHERE conversation_id = c.id),
+    c.passenger_last_read = (SELECT IFNULL(MAX(id), 0) FROM chat_messages WHERE conversation_id = c.id AND created_at < NOW() - INTERVAL 5 MINUTE)
+WHERE c.id = @c1;
+
+-- 2. Lost umbrella after a completed trip (everything read)
+SET @ride2 = (SELECT r.id FROM rides r JOIN passengers p ON p.id = r.passenger_id
+              WHERE p.email = 'wei.jie.tan@mail.com' AND r.status = 'completed' AND r.driver_id IS NOT NULL
+              ORDER BY r.id DESC LIMIT 1);
+INSERT INTO chat_conversations (type, passenger_id, driver_id, ride_id, created_at, last_message_at)
+SELECT 'ride', passenger_id, driver_id, id, NOW() - INTERVAL 26 HOUR, NOW() - INTERVAL 25 HOUR FROM rides WHERE id = @ride2;
+SET @c2 = (SELECT id FROM chat_conversations WHERE ride_id = @ride2);
+INSERT INTO chat_messages (conversation_id, sender_role, sender_id, body, created_at)
+SELECT c.id, x.role, IF(x.role = 'driver', c.driver_id, c.passenger_id), x.body, NOW() - INTERVAL x.mins MINUTE
+FROM chat_conversations c
+JOIN (SELECT 'passenger' AS role, 'Hi, I think I left a black umbrella on the back seat. Did you see it?' AS body, 1560 AS mins
+      UNION ALL SELECT 'driver', 'Yes, I found it! I can drop it off at the same place tomorrow morning around 9am, is that ok?', 1530
+      UNION ALL SELECT 'passenger', 'Perfect, thank you so much!', 1500) x
+WHERE c.id = @c2 ORDER BY x.mins DESC;
+UPDATE chat_conversations c SET c.driver_last_read = (SELECT MAX(id) FROM chat_messages WHERE conversation_id = c.id),
+                                c.passenger_last_read = (SELECT MAX(id) FROM chat_messages WHERE conversation_id = c.id)
+WHERE c.id = @c2;
+
+-- 3. Support: Priya asks about a charge (admin replied; her latest message is waiting for an admin)
+INSERT INTO chat_conversations (type, passenger_id, created_at, last_message_at)
+SELECT 'support', id, NOW() - INTERVAL 3 HOUR, NOW() - INTERVAL 40 MINUTE FROM passengers WHERE email = 'priya.nair@mail.com';
+SET @c3 = (SELECT c.id FROM chat_conversations c JOIN passengers p ON p.id = c.passenger_id WHERE c.type = 'support' AND p.email = 'priya.nair@mail.com');
+INSERT INTO chat_messages (conversation_id, sender_role, sender_id, body, created_at)
+SELECT c.id, x.role, IF(x.role = 'admin', @admin, c.passenger_id), x.body, NOW() - INTERVAL x.mins MINUTE
+FROM chat_conversations c
+JOIN (SELECT 'passenger' AS role, 'Hi, I was charged for a trip that I cancelled yesterday evening. Can I get a refund?' AS body, 180 AS mins
+      UNION ALL SELECT 'admin', 'Hi Priya, sorry about that! Could you tell us the trip number or the pick-up place so we can check?', 150
+      UNION ALL SELECT 'passenger', 'It was from KL Sentral to Bangsar South, around 7pm. The driver never arrived.', 40) x
+WHERE c.id = @c3 ORDER BY x.mins DESC;
+UPDATE chat_conversations c
+SET c.passenger_last_read = (SELECT MAX(id) FROM chat_messages WHERE conversation_id = c.id),
+    c.admin_last_read     = (SELECT MAX(id) FROM chat_messages WHERE conversation_id = c.id AND sender_role = 'admin')
+WHERE c.id = @c3;
+
+-- 4. Support: Jason asked how to change his payment method — resolved
+INSERT INTO chat_conversations (type, passenger_id, status, created_at, last_message_at)
+SELECT 'support', id, 'resolved', NOW() - INTERVAL 3 DAY, NOW() - INTERVAL 3 DAY + INTERVAL 20 MINUTE FROM passengers WHERE email = 'jason.wong@mail.com';
+SET @c4 = (SELECT c.id FROM chat_conversations c JOIN passengers p ON p.id = c.passenger_id WHERE c.type = 'support' AND p.email = 'jason.wong@mail.com');
+INSERT INTO chat_messages (conversation_id, sender_role, sender_id, body, created_at)
+SELECT c.id, x.role, IF(x.role = 'admin', @admin, c.passenger_id), x.body, NOW() - INTERVAL 3 DAY + INTERVAL x.mins MINUTE
+FROM chat_conversations c
+JOIN (SELECT 'passenger' AS role, 'How do I change my default payment from cash to card?' AS body, 0 AS mins
+      UNION ALL SELECT 'admin', 'Hi Jason! Go to Settings → Profile, choose "Card" under Preferred payment and press Save profile. It will be used for your next trip.', 12
+      UNION ALL SELECT 'passenger', 'Done, thanks for the quick help!', 20) x
+WHERE c.id = @c4 ORDER BY x.mins ASC;
+UPDATE chat_conversations c SET c.passenger_last_read = (SELECT MAX(id) FROM chat_messages WHERE conversation_id = c.id),
+                                c.admin_last_read     = (SELECT MAX(id) FROM chat_messages WHERE conversation_id = c.id)
+WHERE c.id = @c4;
+
+-- 5. Support: Farah's new complaint, not answered yet
+INSERT INTO chat_conversations (type, passenger_id, created_at, last_message_at)
+SELECT 'support', id, NOW() - INTERVAL 15 MINUTE, NOW() - INTERVAL 15 MINUTE FROM passengers WHERE email = 'farah.aziz@mail.com';
+SET @c5 = (SELECT c.id FROM chat_conversations c JOIN passengers p ON p.id = c.passenger_id WHERE c.type = 'support' AND p.email = 'farah.aziz@mail.com');
+INSERT INTO chat_messages (conversation_id, sender_role, sender_id, body, created_at)
+SELECT c.id, 'passenger', c.passenger_id, 'Hello, my driver this morning took a much longer route than the app showed and the fare was higher than usual. Can someone look into it?', NOW() - INTERVAL 15 MINUTE
+FROM chat_conversations c WHERE c.id = @c5;
+UPDATE chat_conversations c SET c.passenger_last_read = (SELECT MAX(id) FROM chat_messages WHERE conversation_id = c.id) WHERE c.id = @c5;

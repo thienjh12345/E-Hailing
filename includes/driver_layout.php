@@ -14,11 +14,14 @@ function driver_header(string $title, string $active = ''): void
     $d = current_driver();
     $nav = [
         'home'     => ['Home',               'driver/index.php',    'home'],
+        'messages' => ['Messages',           'driver/messages.php', 'chat'],
         'earnings' => ['Earnings',           'driver/earnings.php', 'money'],
         'vehicle'  => ['Licence & vehicle',  'driver/vehicle.php',  'rides'],
         'settings' => ['Settings',           'driver/profile.php',  'settings'],
     ];
     $hasRequest = $d && pending_change_request((int)$d['id']);
+    require_once __DIR__ . '/chat.php';
+    $unreadChat = chat_unread_total(['role' => 'driver', 'id' => (int)$d['id']]);
     ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -43,6 +46,9 @@ function driver_header(string $title, string $active = ''): void
                 <a href="<?= e(url($href)) ?>" class="nav-link<?= $key === $active ? ' active' : '' ?>"<?= $key === $active ? ' aria-current="page"' : '' ?>>
                     <?= icon($ic) ?>
                     <span><?= e($label) ?></span>
+                    <?php if ($key === 'messages' && $unreadChat > 0): ?>
+                        <span class="nav-count" title="Unread messages"><?= $unreadChat ?></span>
+                    <?php endif; ?>
                     <?php if ($key === 'vehicle' && $hasRequest): ?>
                         <span class="nav-count soft" title="Change request waiting for admin review">1</span>
                     <?php endif; ?>

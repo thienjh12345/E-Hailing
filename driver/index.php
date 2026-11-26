@@ -113,7 +113,7 @@ driver_header('Home', 'home');
         <header class="card-head"><div><h2>Recent trips</h2><p class="muted">Your latest 6 rides</p></div></header>
         <div class="table-wrap">
             <table class="table">
-                <thead><tr><th>Trip</th><th>Passenger</th><th>Route</th><th class="num">Fare</th><th>Their rating</th><th>Status</th></tr></thead>
+                <thead><tr><th>Trip</th><th>Passenger</th><th>Route</th><th class="num">Fare</th><th>Their rating</th><th>Status</th><th><span class="sr-only">Message</span></th></tr></thead>
                 <tbody>
                 <?php foreach ($trips as $t): ?>
                     <tr>
@@ -123,10 +123,11 @@ driver_header('Home', 'home');
                         <td class="num"><?= e(money($t['fare'])) ?></td>
                         <td><?= $t['rating'] ? '<span class="rating">' . icon('star', 14) . ' ' . (int)$t['rating'] . '</span>' : '<span class="muted">—</span>' ?></td>
                         <td><?= badge($t['status']) ?></td>
+                        <td><a class="icon-btn" href="<?= e(url('driver/messages.php?ride=' . $t['id'])) ?>" title="Message <?= e($t['passenger_name']) ?>" aria-label="Message <?= e($t['passenger_name']) ?>"><?= icon('chat', 16) ?></a></td>
                     </tr>
                 <?php endforeach; ?>
                 <?php if (!$trips): ?>
-                    <tr><td colspan="6" class="empty">No trips yet<?= $d['status'] === 'approved' ? ' — go online to receive ride requests.' : '. You can start driving once you\'re approved.' ?></td></tr>
+                    <tr><td colspan="7" class="empty">No trips yet<?= $d['status'] === 'approved' ? ' — go online to receive ride requests.' : '. You can start driving once you\'re approved.' ?></td></tr>
                 <?php endif; ?>
                 </tbody>
             </table>
