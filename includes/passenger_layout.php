@@ -17,8 +17,10 @@ function passenger_header(string $title, string $active = ''): void
     $unreadChat = chat_unread_total(['role' => 'passenger', 'id' => (int)$p['id']]);
     $nav = [
         'home'     => ['Home',         'passenger/index.php',    'home'],
+        'book'     => ['Book a ride',  'passenger/book.php',     'navigate'],
         'rides'    => ['My rides',     'passenger/rides.php',    'rides'],
         'messages' => ['Messages',     'passenger/messages.php', 'chat'],
+        'wallet'   => ['Wallet',       'passenger/wallet.php',   'wallet'],
         'places'   => ['Saved places', 'passenger/places.php',   'pin'],
         'settings' => ['Settings',     'passenger/profile.php',  'settings'],
     ];

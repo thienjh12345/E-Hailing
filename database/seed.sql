@@ -379,3 +379,64 @@ INSERT INTO chat_messages (conversation_id, sender_role, sender_id, body, create
 SELECT c.id, 'passenger', c.passenger_id, 'Hello, my driver this morning took a much longer route than the app showed and the fare was higher than usual. Can someone look into it?', NOW() - INTERVAL 15 MINUTE
 FROM chat_conversations c WHERE c.id = @c5;
 UPDATE chat_conversations c SET c.passenger_last_read = (SELECT MAX(id) FROM chat_messages WHERE conversation_id = c.id) WHERE c.id = @c5;
+
+-- -------------------------------------------------------------
+-- Ride booking & payments: fill in details for the demo trips
+-- (service type, city, timestamps, payments, saved cards, wallet)
+-- -------------------------------------------------------------
+
+-- Service type comes from the driver's vehicle; city from where the trip is
+UPDATE rides r LEFT JOIN drivers d ON d.id = r.driver_id SET r.service_type = COALESCE(d.vehicle_type, 'car');
+UPDATE rides SET city = IF(pickup_lat > 4, 'kota_kinabalu', 'klang_valley');
+UPDATE rides SET accepted_at  = requested_at + INTERVAL 1 MINUTE WHERE driver_id IS NOT NULL AND status IN ('accepted','ongoing','completed');
+UPDATE rides SET started_at   = requested_at + INTERVAL 3 MINUTE WHERE status IN ('ongoing','completed');
+UPDATE rides SET cancelled_at = requested_at + INTERVAL 4 MINUTE, cancelled_by = 'passenger' WHERE status = 'cancelled';
+
+-- Drivers work in the city of their trips (drivers with no trips: Sabah plates -> Kota Kinabalu)
+UPDATE drivers d SET d.city = 'kota_kinabalu', d.updated_at = d.updated_at
+WHERE (SELECT COUNT(*) FROM rides r WHERE r.driver_id = d.id AND r.city = 'kota_kinabalu')
+    > (SELECT COUNT(*) FROM rides r WHERE r.driver_id = d.id AND r.city = 'klang_valley')
+   OR (d.plate_no LIKE 'S%' AND NOT EXISTS (SELECT 1 FROM rides r WHERE r.driver_id = d.id));
+
+-- A saved (demo) Visa card for every passenger who has paid by card
+INSERT INTO payment_cards (passenger_id, brand, last4, exp_month, exp_year, holder_name, is_default, created_at)
+SELECT p.id, 'Visa', LPAD(MOD(p.id * 7919, 10000), 4, '0'), 1 + MOD(p.id, 12), YEAR(CURDATE()) + 2, UPPER(p.name), 1, p.created_at
+FROM passengers p
+WHERE EXISTS (SELECT 1 FROM rides r WHERE r.passenger_id = p.id AND r.payment_method = 'card');
+
+-- One payment per trip: completed = paid, cancelled = cancelled, live = pending (charged when the trip ends)
+INSERT INTO payments (ride_id, passenger_id, method, card_id, amount, status, reference, paid_at, created_at)
+SELECT r.id, r.passenger_id, r.payment_method,
+       IF(r.payment_method = 'card', (SELECT c.id FROM payment_cards c WHERE c.passenger_id = r.passenger_id ORDER BY c.is_default DESC, c.id LIMIT 1), NULL),
+       r.fare,
+       CASE r.status WHEN 'completed' THEN 'paid' WHEN 'cancelled' THEN 'cancelled' ELSE 'pending' END,
+       CONCAT('CRB', DATE_FORMAT(r.requested_at, '%y%m%d'), LPAD(r.id, 7, '0')),
+       IF(r.status = 'completed', r.completed_at, NULL),
+       r.requested_at
+FROM rides r;
+
+-- CrabPay wallet: one top-up before the first trip (enough for every wallet trip + some spare),
+-- then a deduction for each completed wallet trip. Balances are worked out from the history.
+INSERT INTO wallet_transactions (passenger_id, type, amount, balance_after, description, created_at)
+SELECT p.id, 'topup',
+       CEIL((COALESCE((SELECT SUM(r.fare) FROM rides r WHERE r.passenger_id = p.id AND r.payment_method = 'wallet' AND r.status <> 'cancelled'), 0)
+             + 30 + MOD(p.id * 37, 120)) / 10) * 10,
+       0, 'Top-up via online banking (FPX)',
+       LEAST(p.created_at, COALESCE((SELECT MIN(r.requested_at) FROM rides r WHERE r.passenger_id = p.id), p.created_at)) - INTERVAL 1 DAY
+FROM passengers p;
+
+INSERT INTO wallet_transactions (passenger_id, type, amount, balance_after, ride_id, description, created_at)
+SELECT r.passenger_id, 'ride', -r.fare, 0, r.id, CONCAT('Trip #', r.id, ' · ', r.pickup_address, ' → ', r.dropoff_address), r.completed_at
+FROM rides r WHERE r.payment_method = 'wallet' AND r.status = 'completed';
+
+UPDATE wallet_transactions w
+JOIN (SELECT id, SUM(amount) OVER (PARTITION BY passenger_id ORDER BY created_at, id) AS bal FROM wallet_transactions) t ON t.id = w.id
+SET w.balance_after = t.bal;
+
+UPDATE passengers p
+SET p.wallet_balance = COALESCE((SELECT SUM(w.amount) FROM wallet_transactions w WHERE w.passenger_id = p.id), 0),
+    p.updated_at = p.updated_at;   -- a wallet change is not a "profile update"
+
+-- Demo data loading above should not count as "profile updated"
+UPDATE drivers    SET updated_at = NULL;
+UPDATE passengers SET updated_at = NULL;

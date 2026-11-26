@@ -66,6 +66,8 @@ passenger_header('My rides', 'rides');
             <footer class="ride-card-foot">
                 <?= driver_chip($r) ?>
                 <div class="ride-card-actions">
+                    <?php if (in_array($r['status'], ['requested', 'accepted', 'ongoing'], true)): ?><a class="btn btn-sm btn-primary" href="<?= e(url('passenger/book.php')) ?>">Track trip</a><?php endif; ?>
+                    <?php if ($r['status'] === 'completed'): ?><a class="btn btn-sm btn-ghost" href="<?= e(url('passenger/receipt.php?id=' . $r['id'])) ?>"><?= icon('receipt', 15) ?> Receipt</a><?php endif; ?>
                     <?php if ($r['driver_name']): ?><a class="btn btn-sm btn-ghost" href="<?= e(url('passenger/messages.php?ride=' . $r['id'])) ?>"><?= icon('chat', 15) ?> Message driver</a><?php endif; ?>
                     <a class="btn btn-sm btn-ghost" href="<?= e(url('passenger/messages.php?support=1&about=' . $r['id'])) ?>">Get help</a>
                     <?php if ($r['status'] === 'completed' && $r['driver_name']): ?>

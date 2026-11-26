@@ -12,10 +12,19 @@ An e-hailing website that supposed to resembles like the application 'Grab'.
 3. Copy `config/config.example.php` to `config/config.php` and adjust the DB settings / `BASE_URL` if needed. (`config.php` is git-ignored.)
 4. Open **http://localhost/ehailing/E-Hailing/** — the homepage has one sign-in form: pick *Passenger*, *Driver* or *Admin*, sign in, and you land in that portal. Logging out (or opening a portal page while signed out) brings you back here with your role preselected (e.g. `index.php?as=driver`). The per-portal pages (`admin/login.php`, `driver/login.php`, `passenger/login.php`) still work too.
 
-**Already imported an older schema?** Run the files in `database/migrations/` that you haven't run yet, in order (`001_…`, `002_…`, then `003_in_app_chat.sql`) — they add the new columns/tables without touching your existing data. To get the latest demo data (e.g. the Kota Kinabalu rides and drivers), simply re-import `schema.sql` and then `seed.sql` (this resets the database to the demo data).
+**Already imported an older schema?** Run the files in `database/migrations/` that you haven't run yet, in order (`001_…`, `002_…`, `003_in_app_chat.sql`, then `004_booking_payments.sql`) — they add the new columns/tables without touching your existing data. To get the latest demo data (e.g. the Kota Kinabalu rides and drivers), simply re-import `schema.sql` and then `seed.sql` (this resets the database to the demo data).
 
 **Default admin login:** `admin@crab.com` / `admin123` — change it before going live.
 The demo data covers two cities — the **Klang Valley** and **Kota Kinabalu, Sabah**. Each driver works in one city and every trip stays inside its driver's city. Demo drivers and passengers all use the password `password` — e.g. driver `tan.boon.huat@crabdriver.com` (has a pending profile change for the admin to review) and passenger `chloe.lim@mail.com` (has a live trip and trips to rate).
+
+## Ride Booking & Payments
+
+- **Passengers** book from *Book a ride* (`passenger/book.php`): pick-up and destination (same city — Klang Valley or Kota Kinabalu, list in `includes/locations.php`), a note for the driver, Car / Premium / Bike with live prices, and how to pay. The same page then tracks the trip (finding a driver → driver on the way → on trip) and updates itself; they can cancel free of charge until pick-up. Requests nobody accepts within 10 minutes are cancelled automatically.
+- **Drivers** use *Ride requests* (`driver/trips.php`): choose the city they drive in, go online, accept a request (only one driver can win it), start the trip, then complete it — or hand it back before pick-up so another driver gets it.
+- **Payments** (`includes/payments.php`): *cash* (driver collects), *card* (charged when the trip ends) or *CrabPay wallet* (deducted when the trip ends; if the balance is too low by then it falls back to cash). Every trip has one row in `payments` with a receipt number; passengers see a receipt (`passenger/receipt.php`). The *Wallet* page (`passenger/wallet.php`) has top-ups (FPX or saved card), saved cards and the full history.
+- **Admins**: *Payments* (`admin/payments.php`) shows totals by method and every payment; refunds (to the passenger's wallet) are on each trip's page.
+- Card payments and top-ups are **simulated** — there is no real payment gateway. Only a card's brand, last 4 digits and expiry are stored, never the full number or CVV. Test card: `4242 4242 4242 4242`, any future expiry, any 3 digits.
+- Existing databases: run `database/migrations/004_booking_payments.sql` once (it also creates payment records, cards and wallet histories for the trips already there).
 
 ## In-App Chat
 

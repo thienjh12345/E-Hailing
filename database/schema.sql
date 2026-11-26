@@ -10,6 +10,9 @@ CREATE DATABASE IF NOT EXISTS crab_db
 USE crab_db;
 
 SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS wallet_transactions;
+DROP TABLE IF EXISTS payments;
+DROP TABLE IF EXISTS payment_cards;
 DROP TABLE IF EXISTS chat_messages;
 DROP TABLE IF EXISTS chat_conversations;
 DROP TABLE IF EXISTS passenger_saved_places;
@@ -47,6 +50,7 @@ CREATE TABLE passengers (
   emergency_name    VARCHAR(100)  NULL,
   emergency_phone   VARCHAR(20)   NULL,
   preferred_payment ENUM('cash','card','wallet') NOT NULL DEFAULT 'cash',
+  wallet_balance    DECIMAL(10,2) NOT NULL DEFAULT 0.00,   -- CrabPay wallet (see wallet_transactions)
   status            ENUM('active','suspended') NOT NULL DEFAULT 'active',
   status_note       VARCHAR(255)  NULL,          -- admin reason shown to the passenger when suspended
   last_login_at     DATETIME      NULL,
@@ -93,6 +97,7 @@ CREATE TABLE drivers (
   status          ENUM('pending','approved','suspended','rejected') NOT NULL DEFAULT 'pending',
   status_note     VARCHAR(255)  NULL,          -- admin reason shown to the driver (rejection / suspension)
   is_online       TINYINT(1)    NOT NULL DEFAULT 0,
+  city            ENUM('klang_valley','kota_kinabalu') NOT NULL DEFAULT 'klang_valley',  -- where they take ride requests
   rating          DECIMAL(3,2)  NULL,
   created_at      DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at      DATETIME      NULL ON UPDATE CURRENT_TIMESTAMP,
@@ -118,12 +123,20 @@ CREATE TABLE rides (
   payment_method   ENUM('cash','card','wallet') NOT NULL DEFAULT 'cash',
   status           ENUM('requested','accepted','ongoing','completed','cancelled') NOT NULL DEFAULT 'requested',
   rating           TINYINT UNSIGNED NULL,
+  service_type     ENUM('car','premium','bike') NOT NULL DEFAULT 'car',
+  city             ENUM('klang_valley','kota_kinabalu') NOT NULL DEFAULT 'klang_valley',
+  pickup_note      VARCHAR(120)  NULL,          -- e.g. "Main entrance, blue shirt"
   requested_at     DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  accepted_at      DATETIME      NULL,
+  started_at       DATETIME      NULL,
   completed_at     DATETIME      NULL,
+  cancelled_at     DATETIME      NULL,
+  cancelled_by     ENUM('passenger','driver','admin','system') NULL,
   CONSTRAINT fk_rides_passenger FOREIGN KEY (passenger_id) REFERENCES passengers(id) ON DELETE CASCADE,
   CONSTRAINT fk_rides_driver    FOREIGN KEY (driver_id)    REFERENCES drivers(id)    ON DELETE SET NULL,
   INDEX idx_rides_status (status),
-  INDEX idx_rides_requested (requested_at)
+  INDEX idx_rides_requested (requested_at),
+  INDEX idx_rides_open (status, city, service_type)
 ) ENGINE=InnoDB;
 
 -- -------------------------------------------------------------
@@ -185,6 +198,62 @@ CREATE TABLE chat_messages (
   created_at      DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_msg_conversation FOREIGN KEY (conversation_id) REFERENCES chat_conversations(id) ON DELETE CASCADE,
   INDEX idx_msg_conversation (conversation_id, id)
+) ENGINE=InnoDB;
+
+-- -------------------------------------------------------------
+-- Payments: saved cards, CrabPay wallet, one payment per ride
+--   Card numbers are NEVER stored — only brand, last 4 digits and
+--   expiry (a real app would store a token from a payment gateway).
+-- -------------------------------------------------------------
+CREATE TABLE payment_cards (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  passenger_id  INT UNSIGNED  NOT NULL,
+  brand         VARCHAR(20)   NOT NULL,          -- Visa, Mastercard, Amex
+  last4         CHAR(4)       NOT NULL,
+  exp_month     TINYINT UNSIGNED  NOT NULL,
+  exp_year      SMALLINT UNSIGNED NOT NULL,
+  holder_name   VARCHAR(100)  NOT NULL,
+  is_default    TINYINT(1)    NOT NULL DEFAULT 0,
+  created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_card_passenger FOREIGN KEY (passenger_id) REFERENCES passengers(id) ON DELETE CASCADE,
+  INDEX idx_card_passenger (passenger_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE payments (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  ride_id       INT UNSIGNED  NOT NULL,
+  passenger_id  INT UNSIGNED  NOT NULL,
+  method        ENUM('cash','card','wallet') NOT NULL,
+  card_id       INT UNSIGNED  NULL,
+  amount        DECIMAL(8,2)  NOT NULL,
+  status        ENUM('pending','paid','failed','refunded','cancelled') NOT NULL DEFAULT 'pending',
+  reference     VARCHAR(30)   NOT NULL,          -- receipt number, e.g. CRB2611250000173
+  note          VARCHAR(255)  NULL,              -- e.g. "Wallet balance too low — paid in cash"
+  paid_at       DATETIME      NULL,
+  refunded_at   DATETIME      NULL,
+  refunded_by   INT UNSIGNED  NULL,
+  created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_pay_ride      FOREIGN KEY (ride_id)      REFERENCES rides(id)         ON DELETE CASCADE,
+  CONSTRAINT fk_pay_passenger FOREIGN KEY (passenger_id) REFERENCES passengers(id)    ON DELETE CASCADE,
+  CONSTRAINT fk_pay_card      FOREIGN KEY (card_id)      REFERENCES payment_cards(id) ON DELETE SET NULL,
+  CONSTRAINT fk_pay_admin     FOREIGN KEY (refunded_by)  REFERENCES admins(id)        ON DELETE SET NULL,
+  UNIQUE KEY uq_pay_ride (ride_id),
+  UNIQUE KEY uq_pay_reference (reference),
+  INDEX idx_pay_status (status, paid_at)
+) ENGINE=InnoDB;
+
+CREATE TABLE wallet_transactions (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  passenger_id  INT UNSIGNED  NOT NULL,
+  type          ENUM('topup','ride','refund','adjustment') NOT NULL,
+  amount        DECIMAL(10,2) NOT NULL,          -- + money in, - money out
+  balance_after DECIMAL(10,2) NOT NULL,
+  ride_id       INT UNSIGNED  NULL,
+  description   VARCHAR(255)  NOT NULL,
+  created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_wallet_passenger FOREIGN KEY (passenger_id) REFERENCES passengers(id) ON DELETE CASCADE,
+  CONSTRAINT fk_wallet_ride      FOREIGN KEY (ride_id)      REFERENCES rides(id)      ON DELETE SET NULL,
+  INDEX idx_wallet_passenger (passenger_id, created_at)
 ) ENGINE=InnoDB;
 
 -- -------------------------------------------------------------

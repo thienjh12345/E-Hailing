@@ -24,6 +24,7 @@ function admin_header(string $title, string $active = ''): void
         'rides'      => ['Rides',      'admin/rides.php',      'rides'],
         'drivers'    => ['Drivers',    'admin/drivers.php',    'driver'],
         'passengers' => ['Passengers', 'admin/passengers.php', 'users'],
+        'payments'   => ['Payments',   'admin/payments.php',   'money'],
         'support'    => ['Support',    'admin/support.php',    'chat'],
         'settings'   => ['Settings',   'admin/profile.php',    'settings'],
     ];

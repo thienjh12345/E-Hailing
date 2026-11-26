@@ -81,6 +81,7 @@ driver_header('Home', 'home');
                 <?= icon('power', 22) ?>
                 <span><strong><?= $d['is_online'] ? 'You\'re online' : 'You\'re offline' ?></strong><small><?= $d['is_online'] ? 'Tap to go offline' : 'Tap to go online' ?></small></span>
             </button>
+            <a class="btn btn-primary" href="<?= e(url('driver/trips.php')) ?>"><?= icon('navigate', 16) ?> Ride requests</a>
         </form>
     <?php endif; ?>
 </section>

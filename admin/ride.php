@@ -6,11 +6,22 @@ require_admin();
 $pdo = db();
 $id = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
 
-/* Cancel a live ride (e.g. passenger called support). */
+require_once __DIR__ . '/../includes/booking.php';
+
+/* Refund a paid trip to the passenger's CrabPay wallet. */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'refund') {
+    verify_csrf();
+    [$ok, $msg] = payment_refund($id, (int)current_admin()['id'], mb_substr(trim((string)($_POST['reason'] ?? '')), 0, 200));
+    flash($ok ? 'success' : 'error', $msg);
+    redirect('admin/ride.php?id=' . $id);
+}
+
+/* Cancel a live ride (e.g. passenger called support). Nothing is charged. */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'cancel') {
     verify_csrf();
-    $upd = $pdo->prepare("UPDATE rides SET status = 'cancelled' WHERE id = ? AND status IN ('requested','accepted','ongoing')");
+    $upd = $pdo->prepare("UPDATE rides SET status = 'cancelled', cancelled_at = NOW(), cancelled_by = 'admin' WHERE id = ? AND status IN ('requested','accepted','ongoing')");
     $upd->execute([$id]);
+    if ($upd->rowCount()) payment_cancel($id);
     $upd->rowCount()
         ? flash('success', "Ride #$id has been cancelled.")
         : flash('error', "Ride #$id can't be cancelled — it is no longer live.");
@@ -70,8 +81,10 @@ admin_header('Ride #' . $ride['id'], 'rides');
         <dl class="facts">
             <div><dt>Fare</dt><dd><?= e(money($ride['fare'])) ?></dd></div>
             <div><dt>Distance</dt><dd><?= e(number_format($ride['distance_km'], 1)) ?> km</dd></div>
-            <div><dt>Payment</dt><dd><?= e($payLabels[$ride['payment_method']] ?? $ride['payment_method']) ?></dd></div>
+            <div><dt>Ride type</dt><dd><?= e(FARES[$ride['service_type']]['label'] ?? $ride['service_type']) ?> · <?= e(CITIES[$ride['city']] ?? '') ?></dd></div>
             <div><dt>Completed</dt><dd><?= e(fmt_datetime($ride['completed_at'])) ?></dd></div>
+            <?php if ($ride['cancelled_by']): ?><div><dt>Cancelled</dt><dd><?= e(fmt_datetime($ride['cancelled_at'])) ?><small class="muted block">by <?= e($ride['cancelled_by'] === 'system' ? 'system (no driver found)' : $ride['cancelled_by']) ?></small></dd></div><?php endif; ?>
+            <?php if ($ride['pickup_note']): ?><div><dt>Pick-up note</dt><dd>“<?= e($ride['pickup_note']) ?>”</dd></div><?php endif; ?>
             <div><dt>Passenger rating</dt><dd><?= $ride['rating'] ? str_repeat('★', (int)$ride['rating']) . '<span class="muted">' . str_repeat('★', 5 - (int)$ride['rating']) . '</span>' : '<span class="muted">Not rated</span>' ?></dd></div>
         </dl>
 
@@ -123,6 +136,27 @@ $chat = db()->prepare("SELECT m.sender_role, m.body, m.created_at FROM chat_mess
 $chat->execute([$ride['id']]);
 $chatMsgs = $chat->fetchAll();
 ?>
+<?php $pay = payment_for_ride((int)$ride['id']); ?>
+<article class="card">
+    <header class="card-head"><div><h2>Payment</h2><p class="muted"><?= $pay ? 'Receipt ' . e($pay['reference']) : 'No payment record' ?></p></div><?= payment_badge($pay) ?></header>
+    <?php if ($pay): ?>
+        <dl class="facts">
+            <div><dt>Amount</dt><dd><?= e(money($pay['amount'])) ?></dd></div>
+            <div><dt>Method</dt><dd><?= e(payment_method_label($pay)) ?></dd></div>
+            <div><dt>Paid</dt><dd><?= e(fmt_datetime($pay['paid_at'])) ?></dd></div>
+            <?php if ($pay['status'] === 'refunded'): ?><div><dt>Refunded</dt><dd><?= e(fmt_datetime($pay['refunded_at'])) ?><small class="muted block">by <?= e($pay['refunded_by_name'] ?? 'admin') ?>, to CrabPay wallet</small></dd></div><?php endif; ?>
+        </dl>
+        <?php if ($pay['note']): ?><p class="small muted"><?= e($pay['note']) ?></p><?php endif; ?>
+        <?php if ($pay['status'] === 'paid'): ?>
+            <form method="post" class="decision">
+                <?= csrf_field() ?>
+                <input type="text" name="reason" maxlength="200" placeholder="Reason (shown to the passenger)" aria-label="Refund reason">
+                <button class="btn btn-outline" name="action" value="refund" data-confirm="Refund <?= e(money($pay['amount'])) ?> to the passenger's CrabPay wallet?">Refund to wallet</button>
+            </form>
+        <?php endif; ?>
+    <?php endif; ?>
+</article>
+
 <article class="card">
     <header class="card-head"><div><h2>Passenger ↔ driver chat</h2><p class="muted">Read-only record of in-app messages for this trip</p></div></header>
     <?php if ($chatMsgs): ?>

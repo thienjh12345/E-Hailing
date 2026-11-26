@@ -37,6 +37,7 @@ passenger_header('Home', 'home');
             <p class="muted">Riding with Crab since <?= e(date('F Y', strtotime($p['created_at']))) ?> · pays by <?= e(PAYMENT_METHODS[$p['preferred_payment']] ?? '') ?></p>
         </div>
     </div>
+    <a class="btn btn-primary book-cta" href="<?= e(url('passenger/book.php')) ?>"><?= icon('navigate', 18) ?> <?= $live ? 'View your trip' : 'Book a ride' ?></a>
 </section>
 
 <?php if ($live): $r = $live[0]; ?>

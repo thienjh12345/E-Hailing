@@ -14,6 +14,7 @@ function driver_header(string $title, string $active = ''): void
     $d = current_driver();
     $nav = [
         'home'     => ['Home',               'driver/index.php',    'home'],
+        'trips'    => ['Ride requests',      'driver/trips.php',    'navigate'],
         'messages' => ['Messages',           'driver/messages.php', 'chat'],
         'earnings' => ['Earnings',           'driver/earnings.php', 'money'],
         'vehicle'  => ['Licence & vehicle',  'driver/vehicle.php',  'rides'],
@@ -22,6 +23,9 @@ function driver_header(string $title, string $active = ''): void
     $hasRequest = $d && pending_change_request((int)$d['id']);
     require_once __DIR__ . '/chat.php';
     $unreadChat = chat_unread_total(['role' => 'driver', 'id' => (int)$d['id']]);
+    require_once __DIR__ . '/booking.php';
+    $onTrip = driver_active_trip((int)$d['id']);
+    $openRequests = (!$onTrip && !driver_block_reason($d)) ? count(driver_open_requests($d)) : 0;
     ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -46,6 +50,9 @@ function driver_header(string $title, string $active = ''): void
                 <a href="<?= e(url($href)) ?>" class="nav-link<?= $key === $active ? ' active' : '' ?>"<?= $key === $active ? ' aria-current="page"' : '' ?>>
                     <?= icon($ic) ?>
                     <span><?= e($label) ?></span>
+                    <?php if ($key === 'trips' && ($onTrip || $openRequests)): ?>
+                        <span class="nav-count<?= $onTrip ? ' soft' : '' ?>" title="<?= $onTrip ? 'You have a trip in progress' : 'Open ride requests' ?>"><?= $onTrip ? '1' : $openRequests ?></span>
+                    <?php endif; ?>
                     <?php if ($key === 'messages' && $unreadChat > 0): ?>
                         <span class="nav-count" title="Unread messages"><?= $unreadChat ?></span>
                     <?php endif; ?>
