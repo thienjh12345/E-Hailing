@@ -1093,43 +1093,127 @@ a.me:hover .me-gear, a.me.active .me-gear { color: var(--brand-ink); }
 
 /* =============================================================
    Trip "road" progress (passenger + driver) — assets/js/trip-road.js
+   A real street seen from above, used as a loading bar.
    ============================================================= */
+.trip-road {
+    --rd-grass: #A9C98B;   --rd-grass-2: #9BBE7C;
+    --rd-pave: #DAD6CE;    --rd-joint: #C3BEB4;
+    --rd-kerb-a: #2B2D30;  --rd-kerb-b: #F1F1EE;
+    --rd-asphalt: #50555C; --rd-wear: #444950;   --rd-patch: #5A5F66;
+    --rd-paint: #F7F7F2;   --rd-grain: .16;
+    --rd-roof: #C46E4E;    --rd-roof-2: #A7AFB8; --rd-ridge: rgba(0, 0, 0, .18);
+    --rd-tree: #4F8D3F;    --rd-tree-hi: #6DAA55; --rd-tree-shade: rgba(20, 40, 15, .28);
+    --rd-lamp: #6B7280;    --rd-glow: 0;
+    --rd-shadow: rgba(0, 0, 0, .28);
+    --rd-car-edge: rgba(0, 0, 0, .45);
+}
 .trip-road .card-head { margin-bottom: 10px; }
+.trip-road-tools { display: flex; align-items: center; gap: 12px; }
 .road-percent { font-size: 22px; font-weight: 800; color: var(--brand-ink); font-variant-numeric: tabular-nums; }
-.road-map { border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--line); }
+.road-map { border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--line); background: var(--rd-grass); }
 .road-map svg { display: block; width: 100%; height: auto; }
-.map-ground { fill: #EEF1EC; }
-.map-river { fill: #CFE3F3; }
-.map-park { fill: #D6EBCF; }
-.map-blocks rect { fill: #E2E5E0; }
-.map-street { stroke: #FFFFFF; stroke-width: 10; fill: none; }
-.road-base { fill: none; stroke: #4B5563; stroke-width: 30; stroke-linecap: round; stroke-linejoin: round; }
-.road-progress { fill: none; stroke: var(--brand); stroke-width: 30; stroke-linecap: round; stroke-linejoin: round; opacity: .9; }
-.road-center { fill: none; stroke: #F9FAFB; stroke-width: 2.5; stroke-dasharray: 14 12; opacity: .9; }
-.road-stop circle { stroke: #fff; stroke-width: 3; }
-.stop-driver circle { fill: #111827; }
-.stop-driver text { fill: #fff; font-size: 13px; font-weight: 800; font-family: inherit; }
-.stop-pickup circle { fill: var(--brand); }
-.stop-pickup .stop-inner { fill: #fff; stroke: none; }
-.stop-dropoff path { fill: #111827; stroke: #111827; stroke-width: 2; }
-.stop-dropoff circle { fill: #111827; }
-.road-car .car-body { fill: #FFFFFF; stroke: #111827; stroke-width: 2.5; }
-.road-car .car-glass { fill: #93C5FD; }
-.road-car .car-light { fill: #FBBF24; }
-.road-car { filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .35)); }
+
+.rd-grass { fill: var(--rd-grass); }
+.rd-grass-2 ellipse { fill: var(--rd-grass-2); }
+.rd-pave { fill: var(--rd-pave); }
+.rd-joint { stroke: var(--rd-joint); stroke-width: 1; }
+.rd-kerb-a { fill: var(--rd-kerb-a); }
+.rd-kerb-b { fill: var(--rd-kerb-b); }
+.rd-asphalt { fill: var(--rd-asphalt); }
+.rd-grain { fill: #000; opacity: var(--rd-grain); }
+.rd-wear rect { fill: var(--rd-wear); opacity: .55; }
+.rd-patch { fill: var(--rd-patch); }
+.rd-manhole { fill: var(--rd-wear); stroke: var(--rd-patch); stroke-width: 2; }
+.rd-paint rect { fill: var(--rd-paint); }
+.rd-dash { fill: none; stroke: var(--rd-paint); stroke-width: 3; stroke-dasharray: 28 22; }
+.rd-dash-thin { stroke-width: 2; stroke-dasharray: 9 7; }
+.rd-bay { fill: none; stroke: var(--rd-paint); stroke-width: 2; stroke-dasharray: 7 5; opacity: .9; }
+.rd-bay-text { fill: var(--rd-paint); font: 800 9.5px/1 Inter, "Segoe UI", system-ui, sans-serif; letter-spacing: 2px; opacity: .85; }
+.rd-roof rect { fill: var(--rd-roof); }
+.rd-roof-2 rect { fill: var(--rd-roof-2); }
+.rd-ridge path { stroke: var(--rd-ridge); stroke-width: 1.5; fill: none; }
+.rd-shelter rect { fill: #3B82C4; }
+.rd-shelter path { stroke: rgba(255, 255, 255, .55); stroke-width: 1.5; }
+.rd-tree { fill: var(--rd-tree); }
+.rd-tree-hi { fill: var(--rd-tree-hi); opacity: .7; }
+.rd-tree-shade { fill: var(--rd-tree-shade); }
+.rd-lamp-arm { stroke: var(--rd-lamp); stroke-width: 2.5; stroke-linecap: round; }
+.rd-lamp-pole { fill: var(--rd-lamp); }
+.rd-lamp-head { fill: #E5E7EB; stroke: var(--rd-lamp); stroke-width: 1.5; }
+.rd-glow { opacity: var(--rd-glow); }
+
+/* Route: dotted ahead of the car, solid red behind it */
+.road-route { fill: none; stroke: var(--brand); stroke-width: 4; stroke-linecap: round; stroke-dasharray: .1 11; opacity: .75; }
+.road-progress-casing { stroke: #7F1D1D; stroke-width: 15; stroke-linecap: round; opacity: .55; }
+.road-progress { stroke: var(--brand); stroke-width: 10; stroke-linecap: round; opacity: .92; }
+
+/* Pins on the kerb */
+.road-pin .pin-body { stroke: #fff; stroke-width: 2.5; }
+.pin-shadow { fill: rgba(0, 0, 0, .3); }
+.pin-driver .pin-body { fill: #111827; }
+.pin-letter { fill: #fff; font: 800 12px/1 Inter, "Segoe UI", system-ui, sans-serif; }
+.pin-pickup .pin-body, .pin-dropoff .pin-body { fill: var(--brand); }
+.pin-dot { fill: #fff; }
+.pin-flag { fill: #fff; stroke: #fff; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+
+/* Vehicles (seen from above) */
+.veh-shadow { fill: var(--rd-shadow); }
+.car-halo { fill: none; stroke: #fff; stroke-width: 5; stroke-linejoin: round; opacity: .9; }
+.rd-parked .car-halo { display: none; }
+.car-body { fill: var(--car, #F3F4F1); stroke: var(--rd-car-edge); stroke-width: 1.2; }
+.car-roof { fill: rgba(0, 0, 0, .12); }
+.car-glass { fill: #2A3A4D; opacity: .9; }
+.car-head { fill: #FFF6D6; }
+.car-tail { fill: #DC2626; }
+.car-hazard { fill: #FBBF24; opacity: 0; }
+.bike-tyre { fill: #1F2328; }
+.bike-bar { stroke: #1F2328; stroke-width: 3; stroke-linecap: round; }
+.bike-rider { fill: #1F2937; stroke: #fff; stroke-width: 1.2; }
+.bike-helmet { fill: #F9FAFB; stroke: #1F2328; stroke-width: 1.2; }
+.amb-body { fill: #FAFAF7; stroke: rgba(0, 0, 0, .35); stroke-width: 1.2; }
+.amb-cab { fill: #EDEDE8; }
+.amb-stripe { fill: #DC2626; }
+.amb-light { opacity: .35; }
+.amb-red { fill: #EF4444; }
+.amb-blue { fill: #3B82F6; }
+.road-ambulance { display: none; }
+.trip-road.sos-on .road-ambulance { display: inline; }
+.trip-road.sos-on .road-car .car-hazard { animation: crab-blink 1s steps(1, end) infinite; }
+.trip-road.sos-on .amb-red { animation: crab-blink .5s steps(1, end) infinite; }
+.trip-road.sos-on .amb-blue { animation: crab-blink .5s steps(1, end) infinite .25s; }
+@keyframes crab-blink { 0% { opacity: 1; } 50% { opacity: .2; } }
+@media (prefers-reduced-motion: reduce) {
+    .trip-road.sos-on .road-car .car-hazard, .trip-road.sos-on .amb-red, .trip-road.sos-on .amb-blue { animation: none; opacity: 1; }
+}
+
 .trip-road.arrived .road-percent { color: var(--ok); }
 
-:root[data-theme="dark"] .map-ground { fill: #23272B; }
-:root[data-theme="dark"] .map-river { fill: #1B3245; }
-:root[data-theme="dark"] .map-park { fill: #1F3524; }
-:root[data-theme="dark"] .map-blocks rect { fill: #2C3136; }
-:root[data-theme="dark"] .map-street { stroke: #353B41; }
+/* Night street: darker tones, and the street lamps light up the road */
+:root[data-theme="dark"] .trip-road {
+    --rd-grass: #26331F;   --rd-grass-2: #2D3B25;
+    --rd-pave: #45464A;    --rd-joint: #393A3E;
+    --rd-kerb-a: #16171A;  --rd-kerb-b: #A9AAA6;
+    --rd-asphalt: #2B2E33; --rd-wear: #24272B;   --rd-patch: #33363C;
+    --rd-paint: #D8D8D2;   --rd-grain: .22;
+    --rd-roof: #6A3B2C;    --rd-roof-2: #4A5058; --rd-ridge: rgba(0, 0, 0, .3);
+    --rd-tree: #284A22;    --rd-tree-hi: #36602C; --rd-tree-shade: rgba(0, 0, 0, .4);
+    --rd-lamp: #9CA3AF;    --rd-glow: 1;
+    --rd-shadow: rgba(0, 0, 0, .5);
+    --rd-car-edge: rgba(255, 255, 255, .35);
+}
 @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) .map-ground { fill: #23272B; }
-    :root:not([data-theme="light"]) .map-river { fill: #1B3245; }
-    :root:not([data-theme="light"]) .map-park { fill: #1F3524; }
-    :root:not([data-theme="light"]) .map-blocks rect { fill: #2C3136; }
-    :root:not([data-theme="light"]) .map-street { stroke: #353B41; }
+    :root:not([data-theme="light"]) .trip-road {
+        --rd-grass: #26331F;   --rd-grass-2: #2D3B25;
+        --rd-pave: #45464A;    --rd-joint: #393A3E;
+        --rd-kerb-a: #16171A;  --rd-kerb-b: #A9AAA6;
+        --rd-asphalt: #2B2E33; --rd-wear: #24272B;   --rd-patch: #33363C;
+        --rd-paint: #D8D8D2;   --rd-grain: .22;
+        --rd-roof: #6A3B2C;    --rd-roof-2: #4A5058; --rd-ridge: rgba(0, 0, 0, .3);
+        --rd-tree: #284A22;    --rd-tree-hi: #36602C; --rd-tree-shade: rgba(0, 0, 0, .4);
+        --rd-lamp: #9CA3AF;    --rd-glow: 1;
+        --rd-shadow: rgba(0, 0, 0, .5);
+        --rd-car-edge: rgba(255, 255, 255, .35);
+    }
 }
 
 .road-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
@@ -1144,3 +1228,135 @@ a.me:hover .me-gear, a.me.active .me-gear { color: var(--brand-ink); }
 .trip-road.arrived .road-status { color: var(--ok); }
 
 @media (max-width: 640px) { .road-steps { grid-template-columns: minmax(0, 1fr); } }
+
+/* =============================================================
+   Emergency (SOS) — includes/emergency.php, assets/js/emergency.js
+   SIMULATION ONLY: no real emergency service is contacted.
+   ============================================================= */
+.btn-sos { background: #B91C1C; color: #fff; font-weight: 750; box-shadow: 0 0 0 0 rgba(220, 38, 38, .5); }
+.btn-sos:hover { background: #991B1B; }
+.btn-sos:focus-visible { outline: 3px solid #FCA5A5; outline-offset: 2px; }
+.btn-lg { padding: 12px 20px; font-size: 15.5px; }
+.trip-road:not(.sos-on) .trip-road-tools .btn-sos { animation: crab-sos-pulse 2.4s ease-out infinite; }
+@keyframes crab-sos-pulse { 0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, .45); } 70%, 100% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); } }
+
+.sos-banner {
+    display: flex; align-items: center; gap: 12px; margin: 0 0 12px; padding: 10px 12px;
+    border-radius: var(--radius-sm); background: #B91C1C; color: #fff;
+}
+.sos-banner-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: rgba(255, 255, 255, .16); flex: none; }
+.sos-banner-text { flex: 1; min-width: 0; display: grid; }
+.sos-banner-text small { opacity: .9; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sos-banner-eta { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.sos-banner .btn-outline { background: #fff; color: #991B1B; border-color: #fff; }
+.sos-banner .btn-outline:hover { background: #FEE2E2; color: #7F1D1D; }
+.sos-banner.is-arrived { background: #15803D; }
+.sos-banner.is-arrived .btn-outline { color: #14532D; }
+.sos-banner.is-arrived .btn-outline:hover { background: #DCFCE7; }
+
+/* The pop-up */
+.sos-dialog {
+    width: min(440px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); padding: 0; border: 0;
+    border-radius: 20px; background: var(--surface); color: var(--ink); box-shadow: 0 24px 60px rgba(0, 0, 0, .35); overflow: auto;
+}
+.sos-dialog::backdrop { background: rgba(10, 10, 12, .62); }
+.sos-step { padding: 24px 22px 8px; text-align: center; }
+.sos-step h2 { font-size: 21px; font-weight: 750; margin: 0 0 6px; }
+.sos-step p { margin: 0 0 10px; }
+.sos-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.sos-confirm .sos-actions { flex-direction: column; align-items: stretch; margin: 16px 0 6px; }
+
+.sos-count { position: relative; width: 104px; height: 104px; margin: 0 auto 14px; }
+.sos-count svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.sos-count circle { fill: none; stroke-width: 8; }
+.sos-count-track { stroke: var(--bad-bg); }
+.sos-count-ring { stroke: #DC2626; stroke-linecap: round; stroke-dasharray: 326.7; stroke-dashoffset: 0; }
+.sos-count-ring.run { animation: crab-sos-count 3s linear forwards; }
+@keyframes crab-sos-count { to { stroke-dashoffset: 326.7; } }
+.sos-count span { position: absolute; inset: 0; display: grid; place-items: center; font-size: 40px; font-weight: 800; color: #DC2626; font-variant-numeric: tabular-nums; }
+.sos-count-text { font-weight: 600; color: var(--bad); }
+
+/* Phone call screen */
+.sos-call { padding: 0 0 6px; }
+.sos-phone {
+    display: grid; justify-items: center; gap: 4px; padding: 26px 20px 20px; color: #fff;
+    background: radial-gradient(120% 90% at 50% 0%, #7F1D1D 0%, #2A0B0D 70%, #17090A 100%);
+}
+.sos-avatar { position: relative; display: grid; place-items: center; width: 74px; height: 74px; border-radius: 50%; background: #DC2626; margin-bottom: 8px; }
+.sos-avatar .icon { position: relative; z-index: 1; }
+.sos-wave { position: absolute; inset: 0; border-radius: 50%; border: 2px solid rgba(248, 113, 113, .8); opacity: 0; }
+.sos-dialog.is-ringing .sos-wave { animation: crab-ping 1.6s ease-out infinite; }
+.sos-dialog.is-ringing .sos-wave + .sos-wave { animation-delay: .8s; }
+.sos-dialog.is-ringing .sos-avatar .icon { animation: crab-ring 1.6s ease-in-out infinite; }
+.sos-dialog.is-connected .sos-avatar { background: #16A34A; }
+.sos-dialog.is-ended .sos-avatar { background: #52525B; }
+@keyframes crab-ring { 0%, 50%, 100% { transform: rotate(0); } 10%, 30% { transform: rotate(-14deg); } 20%, 40% { transform: rotate(14deg); } }
+.sos-number { font-size: 34px; font-weight: 800; letter-spacing: .04em; line-height: 1.1; }
+.sos-call-status { font-weight: 600; font-variant-numeric: tabular-nums; }
+.sos-call-sub { opacity: .7; }
+/* Once connected, the header shrinks so the conversation has room */
+.sos-dialog.is-connected .sos-phone, .sos-dialog.is-ended .sos-phone { grid-template-columns: auto auto; justify-content: center; column-gap: 14px; padding: 14px 18px; }
+.sos-dialog.is-connected .sos-avatar, .sos-dialog.is-ended .sos-avatar { width: 46px; height: 46px; margin: 0; grid-row: span 3; }
+.sos-dialog.is-connected .sos-avatar .icon, .sos-dialog.is-ended .sos-avatar .icon { width: 22px; height: 22px; }
+.sos-dialog.is-connected .sos-number, .sos-dialog.is-ended .sos-number { font-size: 24px; justify-self: start; }
+.sos-dialog.is-connected .sos-call-status, .sos-dialog.is-connected .sos-call-sub,
+.sos-dialog.is-ended .sos-call-status, .sos-dialog.is-ended .sos-call-sub { justify-self: start; }
+
+.sos-transcript { list-style: none; margin: 0; padding: 14px 16px 4px; display: grid; gap: 8px; max-height: 236px; overflow-y: auto; text-align: left; }
+.sos-line { display: grid; gap: 2px; max-width: 88%; }
+.sos-line small { font-size: 11px; font-weight: 650; color: var(--muted); }
+.sos-line > span { padding: 8px 11px; border-radius: 14px; font-size: 14px; line-height: 1.4; }
+.sos-op > span { background: var(--neutral-bg); border-top-left-radius: 4px; }
+.sos-me { justify-self: end; text-align: right; }
+.sos-me > span { background: var(--brand-soft); color: var(--ink); border-top-right-radius: 4px; text-align: left; }
+.sos-crab { justify-self: center; max-width: 100%; text-align: center; }
+.sos-crab > span { background: var(--warn-bg); color: var(--warn); font-weight: 600; }
+.sos-typing > span { display: inline-flex; gap: 4px; padding: 12px 14px; }
+.sos-typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); animation: crab-dots 1s infinite; }
+.sos-typing i:nth-child(2) { animation-delay: .15s; }
+.sos-typing i:nth-child(3) { animation-delay: .3s; }
+@keyframes crab-dots { 0%, 60%, 100% { opacity: .3; transform: none; } 30% { opacity: 1; transform: translateY(-3px); } }
+
+/* Status */
+.sos-status-icon { display: inline-grid; place-items: center; width: 58px; height: 58px; border-radius: 50%; background: #DC2626; color: #fff; margin-bottom: 10px; }
+.sos-dialog.help-is-here .sos-status-icon { background: #16A34A; }
+.sos-log { list-style: none; margin: 6px 0 4px; padding: 0; display: grid; gap: 4px; color: var(--ink-2); font-size: 14px; }
+
+/* Help tracker */
+.sos-help { margin: 10px 16px 4px; padding: 14px; border: 1px solid var(--brand-line); background: var(--brand-soft); border-radius: 14px; }
+.sos-help-row { display: flex; align-items: center; gap: 12px; }
+.sos-help-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: #DC2626; color: #fff; flex: none; }
+.sos-help-text { flex: 1; min-width: 0; display: grid; text-align: left; }
+.sos-help-text small { color: var(--muted); font-size: 12.5px; }
+.sos-help-eta { font-size: 22px; font-weight: 800; color: var(--brand-ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sos-help-bar { height: 8px; margin: 12px 0 10px; border-radius: 99px; background: color-mix(in srgb, var(--brand) 18%, transparent); overflow: hidden; }
+.sos-help-bar span { display: block; height: 100%; width: 0; border-radius: inherit; background: #DC2626; transition: width .5s linear; }
+.sos-help-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; font-size: 12px; color: var(--muted); }
+.sos-help-steps li { display: flex; align-items: center; gap: 5px; }
+.sos-help-steps li::before { content: ""; width: 9px; height: 9px; border-radius: 50%; border: 2px solid currentColor; flex: none; }
+.sos-help-steps li.is-done { color: var(--ink-2); font-weight: 600; }
+.sos-help-steps li.is-done::before { background: #DC2626; border-color: #DC2626; }
+.sos-help-steps li.is-current::before { animation: crab-blink 1s steps(1, end) infinite; }
+.sos-help.is-arrived { border-color: color-mix(in srgb, var(--ok) 35%, transparent); background: var(--ok-bg); }
+.sos-help.is-arrived .sos-help-icon, .sos-help.is-arrived .sos-help-bar span,
+.sos-help.is-arrived .sos-help-steps li.is-done::before { background: #16A34A; border-color: #16A34A; }
+.sos-help.is-arrived .sos-help-eta { color: var(--ok); font-size: 14px; }
+.sos-help.is-arrived .sos-help-bar { background: color-mix(in srgb, var(--ok) 20%, transparent); }
+
+.sos-foot { padding: 12px 16px 16px; display: grid; gap: 12px; }
+.sos-sound .icon + .icon { display: none; }
+.sos-sound.is-muted .icon { display: none; }
+.sos-sound.is-muted .icon + .icon { display: inline-block; }
+.sos-note { display: flex; gap: 6px; align-items: flex-start; margin: 0; font-size: 12px; color: var(--muted); text-align: left; }
+.sos-note .icon { flex: none; margin-top: 1px; }
+
+@media (prefers-reduced-motion: reduce) {
+    .trip-road-tools .btn-sos, .sos-count-ring.run, .sos-dialog .sos-wave, .sos-dialog .sos-avatar .icon,
+    .sos-typing i, .sos-help-steps li.is-current::before { animation: none !important; }
+    .sos-help-bar span { transition: none; }
+}
+@media (max-width: 640px) {
+    .sos-banner { flex-wrap: wrap; }
+    .sos-banner-text { flex-basis: calc(100% - 120px); }
+    .sos-banner .btn { margin-left: auto; }
+}

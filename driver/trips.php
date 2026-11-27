@@ -66,8 +66,9 @@ driver_header($trip ? 'Current trip' : 'Ride requests', 'trips');
 
 <?php if ($trip): ?>
     <?php $pickupPhase = $trip['status'] === 'accepted'; ?>
-    <?= trip_road($trip + ['driver_name' => $d['name'], 'plate_no' => $d['plate_no']], 'driver') ?>
+    <?= trip_road($trip + ['driver_name' => $d['name'], 'plate_no' => $d['plate_no'], 'vehicle_color' => $d['vehicle_color'], 'vehicle_type' => $d['vehicle_type']], 'driver') ?>
     <script src="<?= e(asset('assets/js/trip-road.js')) ?>" defer></script>
+    <script src="<?= e(asset('assets/js/emergency.js')) ?>" defer></script>
     <section class="grid-main">
         <article class="card trip-live">
             <div class="trip-headline">

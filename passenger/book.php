@@ -326,6 +326,7 @@ passenger_header($live ? 'Your trip' : 'Book a ride', 'book');
     <script src="<?= e(asset('assets/js/map-picker.js')) ?>" defer></script>
 <?php elseif ($live['driver_id']): ?>
     <script src="<?= e(asset('assets/js/trip-road.js')) ?>" defer></script>
+    <script src="<?= e(asset('assets/js/emergency.js')) ?>" defer></script>
 <?php endif; ?>
 <script src="<?= e(asset('assets/js/booking.js')) ?>" defer></script>
 
